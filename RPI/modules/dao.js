@@ -1,51 +1,44 @@
-// Files
-var logger_file = require('./modules/logger.js');
-var gps_file = require('./modules/gps.js');
-var dao_file = require('./modules/dao.js');
-var net_controller_file = require('./modules/net_controller.js');
-var notifier_file = require('./modules/notifier.js');
-var parser_file = require('./modules/parser.js');
-var usb_controller_file = require('./modules/usb_controller.js');
-
-var daoObj = dao_file.init();
-
-var SerialPort = require('serialport');
-
-const Readline = SerialPort.parsers.Readline;
-
-const parser = new Readline();
-
-/*parser.on('open', function(){
-	console.log('onOpen');
-
-});*/
+var mysql = require('mysql');
+var logger_file = require('./logger.js');
 
 
-var GPS = require('gps');
-var gps = new GPS;
+var gpsObj = {
+    db: {},
+    isInit: false,
+    state: {
+        transportID: 0,
+        paymentAmount: 0
+    },
+    init: function () {
+        db = mysql.createConnection({
+            host: 'localhost',
+            port: '/var/run/mysqld/mysqld.sock',
+            user: 'rpibus',
+            password: '12345678qwerty',
+            database: 'bus_system'
+        });
+        console.log('Connection to db created');
 
-const portGPS = new SerialPort('/dev/ttyS0');
-portGPS.pipe(parser);
+        db.connect(function (err) {
+            if (err) {
+                logger_file.writeLog(err);
+            }
+            gpsObj.isInit = true;
 
-var UUID = 0;
+            db.query('SELECT transports.id, route_types.payment_amount FROM transports, route_types, transport_routes, routes WHERE (transports.id = transport_routes.transport_id) AND (transport_routes.routes_id = `routes`.`int`) AND (routes.type_id = route_types.id);', function (err, rows) {
+                if (err) {
+                    logger_file.writeLog(err);
+                }
+                gpsObj.state.transportID = rows[0].id;
+                gpsObj.state.paymentAmount = rows[0].payment_amount;
+                //console.log(gpsObj.state);
 
-var count = 1;
-//var lonSum = 0;
-//var latSum = 0;
-//var buffer = [];
+            });
+        });
+        return gpsObj;
+    },
+    curStation: 1,
+    curStationOrder: 1
+};
 
-
-
-parser.on('data', function (data) {
-    gps.update(data);
-}).on('error', function (err) {
-    logger_file.writeLog(err);
-});
-/*gps.on('data', function () {
-	console.log('parsed');
-});*/
-
-
-setInterval(function () {
-    gps_file.processGPS(gps.state, daoObj)
-}, 1000);
+module.exports = gpsObj;
