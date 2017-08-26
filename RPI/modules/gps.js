@@ -16,7 +16,7 @@ var methods = {
         }
         console.log('!data.lat || !data.lon ---- false');
 
-        dbModule.db.query('SELECT * FROM route_stations;', function (err, result) {
+        dbModule.db.connection.query('SELECT * FROM route_stations;', function (err, result) {
             console.log("shduhsduc");
             if (err) {
                 logger_file.writeLog(err);

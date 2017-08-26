@@ -7,7 +7,7 @@ var notifier_file = require('./modules/notifier.js');
 var parser_file = require('./modules/parser.js');
 var usb_controller_file = require('./modules/usb_controller.js');
 
-var daoObj = dao_file.init();
+dao_file.init();
 
 var SerialPort = require('serialport');
 
@@ -47,5 +47,5 @@ parser.on('data', function (data) {
 
 
 setInterval(function () {
-    gps_file.processGPS(gps.state, daoObj)
+    gps_file.processGPS(gps.state, dao_file)
 }, 1000);

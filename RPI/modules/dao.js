@@ -1,44 +1,73 @@
-var mysql = require('mysql');
-var logger_file = require('./logger.js');
+var MySQL = require('mysql');
+var Logger = require('./logger');
 
+var DAO = {
+    connection: null,
 
-var gpsObj = {
-    db: {},
     isInit: false,
-    state: {
-        transportID: 0,
-        paymentAmount: 0
-    },
-    init: function () {
-        db = mysql.createConnection({
-            host: 'localhost',
-            port: '/var/run/mysqld/mysqld.sock',
-            user: 'rpibus',
-            password: '12345678qwerty',
-            database: 'bus_system'
-        });
-        console.log('Connection to db created');
 
-        db.connect(function (err) {
-            if (err) {
-                logger_file.writeLog(err);
+    connectionOptions: {
+        host: 'localhost',
+        port: '/var/run/mysqld/mysqld.sock',
+        user: 'rpibus',
+        password: '12345678qwerty',
+        database: 'bus_system'
+    },
+
+    connect: function () {
+        DAO.connection = MySQL.createConnection(DAO.connectionOptions);
+
+        DAO.connection.connect(function (err) {
+            if (DAO.logError(err)) {
+                isInit = false;
+            } else {
+                isInit = true;
+
             }
-            gpsObj.isInit = true;
-
-            db.query('SELECT transports.id, route_types.payment_amount FROM transports, route_types, transport_routes, routes WHERE (transports.id = transport_routes.transport_id) AND (transport_routes.routes_id = `routes`.`int`) AND (routes.type_id = route_types.id);', function (err, rows) {
-                if (err) {
-                    logger_file.writeLog(err);
-                }
-                gpsObj.state.transportID = rows[0].id;
-                gpsObj.state.paymentAmount = rows[0].payment_amount;
-                //console.log(gpsObj.state);
-
-            });
         });
-        return gpsObj;
     },
+
+    logError: function (err) {
+        if (err) {
+            /*Logger.log({
+                file: __filename,
+                dir: __dirname,
+                error: err
+            });*/
+            return true;
+        } else {
+            return false;
+        }
+    },
+
+    // TODO: move to controller
+    db: {},
+    init: function () {
+        DAO.connect();
+        db = DAO.connection;
+        DAO.getTransportID();
+        DAO.getPaymentAmount();
+    },
+
+    state: {},
     curStation: 1,
-    curStationOrder: 1
+    curStationOrder: 1,
+
+    getTransportID: function () {
+        DAO.connection.query('SELECT transport_id FROM transport', function (err, result) {
+            if (!DAO.logError(err)) {
+                DAO.state.transportID = result.transportID;
+            }
+        });
+    },
+
+    getPaymentAmount: function () {
+        DAO.connection.query('SELECT payment_amount FROM misc', function (err, result) {
+            if (!DAO.logError(err)) {
+                DAO.state.paymentAmount = result.paymentAmount;
+            }
+        });
+    }
 };
 
-module.exports = gpsObj;
+module.exports = DAO;
