@@ -1,4 +1,4 @@
-// Приклепленные файлы
+// Files
 var logger_file = require('./modules/logger.js');
 var gps_file = require('./modules/gps.js');
 var dao_file = require('./modules/dao.js');
@@ -7,9 +7,19 @@ var notifier_file = require('./modules/notifier.js');
 var parser_file = require('./modules/parser.js');
 var usb_controller_file = require('./modules/usb_controller.js');
 
+var daoObj = dao_file.init();
+
 var SerialPort = require('serialport');
+
 const Readline = SerialPort.parsers.Readline;
+
 const parser = new Readline();
+
+/*parser.on('open', function(){
+	console.log('onOpen');
+
+});*/
+
 
 var GPS = require('gps');
 var gps = new GPS;
@@ -25,11 +35,13 @@ var count = 1;
 const radius = 3;
 //var buffer = [];
 
+
+
 parser.on('data', function (data) {
-	gps.update(data);
+    gps.update(data);
 }).on('error', function (err) {
-        logger.writeLog('gps.txt', err);
+    logger_file.writeLog(err);
 });
 gps.on('data', function () {
-	gps_file.readGpsData();
+    gps_file.processGPS(gps.state, daoObj);
 });
