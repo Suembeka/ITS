@@ -1,3 +1,6 @@
+Thumbs.db
+/rpi/logs
+
 # Logs
 logs
 *.log
