@@ -29,11 +29,7 @@ var DAO = {
 
     logError: function (err) {
         if (err) {
-            /*Logger.log({
-                file: __filename,
-                dir: __dirname,
-                error: err
-            });*/
+            Logger.log({file: __filename, err: err});
             return true;
         } else {
             return false;
