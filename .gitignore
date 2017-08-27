@@ -1,5 +1,6 @@
 Thumbs.db
 /rpi/logs
+*.bak
 
 # Logs
 logs
