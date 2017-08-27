@@ -1,28 +1,56 @@
-var fileSystem = require('fs');
+var fs = require('fs'),
+    dateTime = require('node-datetime');
 
-var dateTime = require('node-datetime');
-var dt = dateTime.create();
-var file_name = dt.format('Y-m-d');
-var formatted = dt.format('Y-m-d H:M:S');
+module.exports = (function () {
+    var Logger = {};
 
-var methods = {
-    writeLog: function (text) {
-        fileSystem.open(__dirname + "/logs/" + file_name, 'r', function (err, fd) {
-            if (err) {
-                fileSystem.writeFile(__dirname + "/logs/" + file_name, formatted + " : " + text + "\n", function (err) {
-                    if (err) {
-                        console.log(err);
-                    }
-                });
-            } else {
-                fileSystem.appendFile(__dirname + "/logs/" + file_name, formatted + " : " + text + "\n", function (err) {
-                    if (err) {
-                        return console.log(err);
-                    }
-                });
-            }
-        })
-    }
-}
+    Logger.output = 'file';
+    Logger.options = {
+        logsFolderPath: '../logs/'
+    };
 
-module.exports = methods;
+    Logger.log = function (opt) {
+        var file = opt.file,
+            msg = opt.msg,
+            err = opt.err;
+        var time = dateTime.create(),
+            currentTime = time.format('d/m/Y H:M:S'),
+            fileName = time.format('Ymd') + '.log',
+            text = [
+				'[' + currentTime + ']',
+				'[' + file + ']',
+				msg,
+                (err ? ('\n' + JSON.stringify(err)) : '')
+			].join(' ') + '\n';
+
+        if (Logger.output == 'file') {
+            fs.appendFile(Logger.options.logsFolderPath + fileName, text, function (err) {
+                if (err) {
+                    console.log(err);
+                }
+            });
+        } else {
+            console.log(text);
+        }
+    };
+
+    // TODO: make it special
+    Logger.error = function () {
+        Logger.log.apply(Logger, [].slice.call(arguments));
+    };
+    // TODO: make it special
+    Logger.info = function () {
+        Logger.log.apply(Logger, [].slice.call(arguments));
+    };
+    // TODO: make it special
+    Logger.debug = function () {
+        Logger.log.apply(Logger, [].slice.call(arguments));
+    };
+
+    // Legacy
+    Logger.writeLog = function (text) {
+        console.log(text);
+    };
+
+    return Logger;
+})();

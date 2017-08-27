@@ -49,12 +49,11 @@ var DAO = {
         DAO.db = DAO.connection;
         DAO.getTransportID();
         DAO.getPaymentAmount();
+        DAO.GPS.allStations();
+        console.log("Init() successful");
     },
 
     state: {},
-    curStation: 1,
-    curStationOrder: 1,
-    circlesCount: 0,
 
     getTransportID: function () {
         "use strict";
@@ -74,42 +73,33 @@ var DAO = {
         });
     },
 
-    stationsListStructure: function (id) {
-        "use strict";
-        this.num = id;
-        this.next = null;
-        this.prev = null;
-    },
+    GPS: {
+        curStation: 1,
+        curStationOrder: 1,
+        circlesCount: 0,
+        stationsLatLng: null,
+        checkedStations: [],
 
-    stationsList: {
-        head: null,
-        addStation: function (id) {
-            "use strict";
-            var New_Node = DAO.stationsListStructure(id), q;
-
-            if (DAO.stationsList.head === null) {
-                DAO.stationsList.head = New_Node;
-            } else {
-                q = DAO.stationsList.head;
-                while (q !== null) {
-                    if (q.next === null) {
-                        q.next = New_Node;
-                        New_Node.prev = q;
-                        New_Node.next = null;
-                        break;
-                    } else {
-                        q = q.next;
-                    }
-                }
-            }
-        },
-        createStationsList: function () {
-            "use strict";
-            DAO.connection.query('SELECT * FROM route_stations ORDER BY station_by_order', function (err, rows) {
+        allStations: function () {
+            DAO.connection.query('SELECT latlng, station_by_order FROM stations, route_stations WHERE stations.id = route_stations.station_id;', function (err, result) {
                 if (!DAO.logError(err)) {
-                    rows.forEach(function (row) {
-                        DAO.stationsList.addStation(row.station_by_order);
-                    });
+                    DAO.GPS.stationsLatLng = result;
+                }
+            });
+        },
+
+        setCurrentStation: function () {
+            DAO.connection.query('UPDATE misc SET current_station_id = ' + DAO.GPS.curStation + ';', function (err) {
+                if (!DAO.logError(err)) {
+                    Logger.writeLog('Current station has changed...');
+                }
+            });
+        },
+
+        increaseCircle: function () {
+            DAO.connection.query('UPDATE misc SET circles_count = ' + DAO.GPS.circlesCount + ';', function (err) {
+                if (!DAO.logError(err)) {
+                    Logger.writeLog('Circles have increased...');
                 }
             });
         }

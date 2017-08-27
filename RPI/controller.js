@@ -10,31 +10,18 @@ var usb_controller_file = require('./modules/usb_controller.js');
 dao_file.init();
 
 var SerialPort = require('serialport');
-
 var Readline = SerialPort.parsers.Readline;
-
 var parser = new Readline();
 
 /*parser.on('open', function(){
 	console.log('onOpen');
-
 });*/
-
 
 var GPS = require('gps');
 var gps = new GPS();
 
 var portGPS = new SerialPort('/dev/ttyS0');
 portGPS.pipe(parser);
-
-var UUID = 0;
-
-var count = 1;
-//var lonSum = 0;
-//var latSum = 0;
-//var buffer = [];
-
-
 
 parser.on('data', function (data) {
     "use strict";
