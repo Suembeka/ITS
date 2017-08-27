@@ -102,6 +102,16 @@ var DAO = {
                     Logger.writeLog('Circles have increased...');
                 }
             });
+        },
+
+        addStationsSequence: function () {
+            for (let i = 0; i < DAO.GPS.checkedStations.length; i++) {
+                DAO.connection.query('INSERT INTO `st_history` (circle_id, serial_number, station_by_order) VALUES (' + DAO.GPS.circlesCount + ', ' + i + ', ' + DAO.GPS.checkedStations[i] + ');', function (err) {
+                    if (!DAO.logError(err)) {
+                        Logger.writeLog('addStationsSequence have done...');
+                    }
+                });
+            }
         }
     }
 };

@@ -24,10 +24,13 @@ var methods = {
                     dbModule.GPS.curStationOrder = station.station_by_order;
                     dbModule.GPS.curStation = station.id;
                     dbModule.GPS.setCurrentStation();
+                    dbModule.GPS.checkedStations.push(station.station_by_order);
                 }
             } else if ((station.station_by_order === 1) && (dbModule.GPS.curStationOrder !== 1)) {
                 dbModule.GPS.circlesCount++;
                 dbModule.GPS.increaseCircle();
+                dbModule.GPS.addStationsSequence();
+                dbModule.GPS.checkedStations = [];
             }
         });
     }
