@@ -11,9 +11,9 @@ dao_file.init();
 
 var SerialPort = require('serialport');
 
-const Readline = SerialPort.parsers.Readline;
+var Readline = SerialPort.parsers.Readline;
 
-const parser = new Readline();
+var parser = new Readline();
 
 /*parser.on('open', function(){
 	console.log('onOpen');
@@ -22,9 +22,9 @@ const parser = new Readline();
 
 
 var GPS = require('gps');
-var gps = new GPS;
+var gps = new GPS();
 
-const portGPS = new SerialPort('/dev/ttyS0');
+var portGPS = new SerialPort('/dev/ttyS0');
 portGPS.pipe(parser);
 
 var UUID = 0;
@@ -37,8 +37,10 @@ var count = 1;
 
 
 parser.on('data', function (data) {
+    "use strict";
     gps.update(data);
 }).on('error', function (err) {
+    "use strict";
     logger_file.writeLog(err);
 });
 /*gps.on('data', function () {
@@ -47,5 +49,6 @@ parser.on('data', function (data) {
 
 
 setInterval(function () {
-    gps_file.processGPS(gps.state, dao_file)
+    "use strict";
+    gps_file.processGPS(GPS, gps.state, dao_file);
 }, 1000);

@@ -1,44 +1,46 @@
 var logger_file = require('./logger.js');
 var radius = 3;
+var dist, latlng;
 
 var methods = {
-    processGPS: function (data, dbModule) {
+    processGPS: function (GPS, data, dbModule) {
+        "use strict";
         if (!dbModule.isInit) {
-            console.log('dbModule.isInit = ' + dbModule.isInit)
+            console.log('dbModule.isInit = ' + dbModule.isInit);
             return;
         }
-
-        console.log(data.lat, data.lon);
 
         if (!data.lat || !data.lon) {
-            console.log('!data.lat || !data.lon ---- true');
             return;
         }
-        console.log('!data.lat || !data.lon ---- false');
 
-        dbModule.db.connection.query('SELECT * FROM route_stations;', function (err, result) {
-            console.log("shduhsduc");
+        dbModule.db.query('SELECT latlng, station_by_order FROM stations, route_stations WHERE stations.id = route_stations.station_id;', function (err, result) {
             if (err) {
                 logger_file.writeLog(err);
             }
 
-
             result.filter(function (station) {
-                console.log('station = ' + station);
-                var latlng = station.latlng.split(',');
-                var dist = GPS.Distance(latlng[0], latlng[1], data.lat, data.lon) * 1000;
-
+                latlng = station.latlng.split(',');
+                dist = GPS.Distance(latlng[0], latlng[1], data.lat, data.lon) * 1000;
+                console.log("Текущая станция = " + dbModule.curStationOrder);
                 if (dist <= radius) {
-                    if (station.stationOrder === (dbModule.state.curStationOrder + 1)) {
-                        cur_station_id = dbModule.state.curStationOrder + 1;
+                    if (station.station_by_order > dbModule.curStationOrder) {
+                        dbModule.curStationOrder = station.station_by_order;
+                        dbModule.curStation = station.id;
 
-                        dbModule.query("UPDATE misc SET station_id = " + station.id + ";", function (err) {
+                        dbModule.db.query("UPDATE misc SET current_station_id = " + dbModule.curStation + ";", function (err) {
                             if (err) {
                                 logger_file.writeLog(err);
                             }
-                            //logger_file.writeLog(Current station has changed');
                         });
                     }
+                } else if (station.station_by_order === 1) {
+                    (dbModule.circlesCount)++;
+                    dbModule.db.query('UPDATE misc SET circles_count = ' + dbModule.circles_count + ';', function (err) {
+                        if (err) {
+                            logger_file.writeLog(err);
+                        }
+                    });
                 }
             });
         });

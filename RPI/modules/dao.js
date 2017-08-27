@@ -15,19 +15,20 @@ var DAO = {
     },
 
     connect: function () {
+        "use strict";
         DAO.connection = MySQL.createConnection(DAO.connectionOptions);
 
         DAO.connection.connect(function (err) {
             if (DAO.logError(err)) {
-                isInit = false;
+                DAO.isInit = false;
             } else {
-                isInit = true;
-
+                DAO.isInit = true;
             }
         });
     },
 
     logError: function (err) {
+        "use strict";
         if (err) {
             /*Logger.log({
                 file: __filename,
@@ -43,8 +44,9 @@ var DAO = {
     // TODO: move to controller
     db: {},
     init: function () {
+        "use strict";
         DAO.connect();
-        db = DAO.connection;
+        DAO.db = DAO.connection;
         DAO.getTransportID();
         DAO.getPaymentAmount();
     },
@@ -52,8 +54,10 @@ var DAO = {
     state: {},
     curStation: 1,
     curStationOrder: 1,
+    circlesCount: 0,
 
     getTransportID: function () {
+        "use strict";
         DAO.connection.query('SELECT transport_id FROM transport', function (err, result) {
             if (!DAO.logError(err)) {
                 DAO.state.transportID = result.transportID;
@@ -62,11 +66,53 @@ var DAO = {
     },
 
     getPaymentAmount: function () {
+        "use strict";
         DAO.connection.query('SELECT payment_amount FROM misc', function (err, result) {
             if (!DAO.logError(err)) {
                 DAO.state.paymentAmount = result.paymentAmount;
             }
         });
+    },
+
+    stationsListStructure: function (id) {
+        "use strict";
+        this.num = id;
+        this.next = null;
+        this.prev = null;
+    },
+
+    stationsList: {
+        head: null,
+        addStation: function (id) {
+            "use strict";
+            var New_Node = DAO.stationsListStructure(id), q;
+
+            if (DAO.stationsList.head === null) {
+                DAO.stationsList.head = New_Node;
+            } else {
+                q = DAO.stationsList.head;
+                while (q !== null) {
+                    if (q.next === null) {
+                        q.next = New_Node;
+                        New_Node.prev = q;
+                        New_Node.next = null;
+                        break;
+                    } else {
+                        q = q.next;
+                    }
+                }
+            }
+        },
+        createStationsList: function () {
+            "use strict";
+            DAO.connection.query('SELECT * FROM route_stations ORDER BY station_by_order', function (err, rows) {
+                if (!DAO.logError(err)) {
+                    rows.forEach(function (row) {
+                        DAO.stationsList.addStation(row.station_by_order);
+                    });
+                }
+            });
+        }
     }
 };
 
