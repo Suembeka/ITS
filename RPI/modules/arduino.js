@@ -1,55 +1,67 @@
-var SerialPort = require('serialport');
+var serialport = require('serialport');
+var Logger = require('./logger');
+var EventEmitter = require('events');
 
-var Arduino = new SerialPort("COM5", {
+
+// TODO: add port finder
+var Serial1 = new SerialPort("COM5", {
     baudrate: 115200,
     parser: SerialPort.parsers.Readline
 });
-
-var Card = {
-    fulldata: "",
-    card_id: 0,
-    card_type: "",
-    amountOfMoney: 0,
-    hash: "",
-    writeTransaction(){
-        connection.query("INSERT INTO 'transactions' VALUES('transaction_id' = '" + UUID + "', 'transaction_time' = '" + Date.now() + "', 'card_id' = '" + currentCard.card_id + "', 'card_type' = '" + currentCard.card_type + "', 'transport_id' = '" + transportID + "', 'station_id' = '" + cur_station_id + "', 'payment_amount' = '" + payment_amount + "');", function (err) {
-            if (err) {
-                logger.writeLog('db.txt', err);
-            }
-        });
-    },
-    //parseCard(){}
+/*
+var Serial2 = new SerialPort("COM5", {
+    baudrate: 115200,
+    parser: SerialPort.parsers.Readline
+});
+*/
+var CardTemplate = {
+    cardID: 0,
+    cardType: 0,
+    balance: 0,
+    expireTime: 0
 };
 
-Arduino.on('data', function (data) {
+Serial.on('open', function () {
+    Logger.log({file: __filename, msg: 'Serial Port Opened'});
+}).on('error', function (err) {
+    Logger.log({file: __filename, msg: 'Serial Port Open Fail', err: err});
+}).on('data', function() {
     // копить данные и ждать начало и окончание передачи ([S] [E])
     // определять тип сообщения ([данные с карты] [отчет о записи])
     // парсить данные учитывая тип сообщения
-
-    currentCard.fullData += data.toString();
-    if (data.toString() === '') {
-		var currentCard = new Card();
-        currentCard.parseCard();
-    }
-}).on('open', function () {
-    logger.writeLog('arduino.txt', 'Serial Port Opened');
-}).on('error', function (err) {
-    logger.writeLog('arduino.txt', err);
 });
 
+// Testing
+function generatePayment() {
+    function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+    return {
+        id: Math.random() > 0.5 ? 1 : 2,
+        card: {
+            cardID: getRandomInt(100, 1000),
+            cardType: getRandomInt(1, 8),
+            balance: getRandomInt(0, 10000),
+            expireTime: Date.now() + getRandomInt(-86400*30, 86400*30)
+        }
+    };
+}
 
-//function releaseBuffer() {
-//    while (buffer.length > 0) {
-//        arduino.write(arduino.buffer.shift());
-//    }
-//}
-//
-//function trustedWrite(msg) {
-//    if (arduino) {
-//        console.log('Write', msg);
-//        arduino.write(msg);
-//    } else {
-//        console.log('Serial not ready, buffering message: ' + msg);
-//        buffer.push(m);
-//    }
-//}
+module.exports = (function() {
+    class Arduino extends EventEmitter {
+        write = function(payment) {
+            console.log(payment);
+            setTimeout(function() {
+                arduino.emit('writeStatus', payment, Math.random() > 0.8);
+            }, 1000);
+        }
+    };
+
+    var arduino = new Arduino();
+
+    setInterval(function() {
+        arduino.emit('payment', generatePayment());
+    }, 2000);
+
+    return arduino;
+})();
