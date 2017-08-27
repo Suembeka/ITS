@@ -1,5 +1,5 @@
 var MySQL = require('mysql');
-var Logger = require('logger');
+var Logger = require('./logger');
 
 var DAO = {
     connection: null,
@@ -14,26 +14,26 @@ var DAO = {
         database: 'bus_system'
     },
 
-    connect: function() {
-        DAO.connection = MySQL.createConnection(connectionOptions);
-        
-        DAO.connection.connect(function(err) {
-            if(DAO.logError(err)) {
-                isInit = false;
+    connect: function () {
+        DAO.connection = MySQL.createConnection(DAO.connectionOptions);
+
+        DAO.connection.connect(function (err) {
+            if (DAO.logError(err)) {
+                DAO.isInit = false;
             } else {
-                isInit = true;
-                
+                DAO.isInit = true;
+
             }
         });
     },
 
-    logError: function(err) {
-        if(err) {
-            logger.log({
+    logError: function (err) {
+        if (err) {
+            /*Logger.log({
                 file: __filename,
                 dir: __dirname,
                 error: err
-            });
+            });*/
             return true;
         } else {
             return false;
@@ -42,28 +42,29 @@ var DAO = {
 
     // TODO: move to controller
     db: {},
-    init: function() {
+    init: function () {
         DAO.connect();
-        db = connection;
+        DAO.db = DAO.connection;
         DAO.getTransportID();
         DAO.getPaymentAmount();
     },
 
     state: {},
-    curStation : 1,
-    curStationOrder : 1,
+    curStation: 1,
+    curStationOrder: 1,
+    circlesCount: 0,
 
-    getTransportID: function() {
-        DAO.connection.query('SELECT transport_id FROM transport', function(err, result) {
-            if(!DAO.logError(err)) {
+    getTransportID: function () {
+        DAO.connection.query('SELECT transport_id FROM transport', function (err, result) {
+            if (!DAO.logError(err)) {
                 DAO.state.transportID = result.transportID;
             }
         });
     },
 
-    getPaymentAmount: function() {
-        DAO.connection.query('SELECT payment_amount FROM misc', function(err, result) {
-            if(!DAO.logError(err)) {
+    getPaymentAmount: function () {
+        DAO.connection.query('SELECT payment_amount FROM misc', function (err, result) {
+            if (!DAO.logError(err)) {
                 DAO.state.paymentAmount = result.paymentAmount;
             }
         });
