@@ -1,3 +1,5 @@
+'use strict';
+
 const DAO = require('./modules/dao.js');
 const Logger = require('./modules/logger.js');
 const GPS = require('./modules/gps.js');

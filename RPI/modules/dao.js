@@ -1,3 +1,5 @@
+'use strict';
+
 var MySQL = require('mysql');
 var Logger = require('./logger');
 

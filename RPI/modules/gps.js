@@ -1,3 +1,5 @@
+'use strict';
+
 const SerialPort = require('serialport');
 const Serial = new SerialPort('/dev/tty.usbserial', {
   baudrate: 4800,

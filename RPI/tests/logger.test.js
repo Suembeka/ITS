@@ -1,3 +1,5 @@
+'use strict';
+
 var logger = require('../modules/logger');
 
 logger.output = 'file';

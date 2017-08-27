@@ -1,3 +1,5 @@
+'use strict';
+
 var serialport = require('serialport');
 var Logger = require('./logger');
 var EventEmitter = require('events');
