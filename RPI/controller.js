@@ -1,35 +1,31 @@
-// Приклепленные файлы
-var logger_file = require('./modules/logger.js');
-var gps_file = require('./modules/gps.js');
-var dao_file = require('./modules/dao.js');
-var net_controller_file = require('./modules/net_controller.js');
-var notifier_file = require('./modules/notifier.js');
-var parser_file = require('./modules/parser.js');
-var usb_controller_file = require('./modules/usb_controller.js');
+const DAO = require('./modules/dao.js');
+const Logger = require('./modules/logger.js');
+const GPS = require('./modules/gps.js');
 
-var SerialPort = require('serialport');
-const Readline = SerialPort.parsers.Readline;
-const parser = new Readline();
+class App {
+	state = {
+		currentStation: null,
+		transportID: null,
+		paymentAmount: null
+	}
 
-var GPS = require('gps');
-var gps = new GPS;
+	initDB() {
+		DAO.connect();
+	}
 
-const portGPS = new SerialPort('/dev/ttyS0');
-portGPS.pipe(parser);
+	initState() {
+		const appInitData = DAO.getAppInitData();
+		this.state.currentStation = appInitData.currentStation;
+		this.state.transportID = appInitData.transportID;
+		this.state.paymentAmount = appInitData.paymentAmount;
+	}
 
-var UUID = 0;
+	initGPS() {
+		GPS.init(this.state);
+	} 
+};
 
-var count = 1;
-//var lonSum = 0;
-//var latSum = 0;
-const radius = 3;
-//var buffer = [];
-
-parser.on('data', function (data) {
-	gps.update(data);
-}).on('error', function (err) {
-        logger.writeLog('gps.txt', err);
-});
-gps.on('data', function () {
-	gps_file.readGpsData();
-});
+const app = new App();
+app.initDB();
+app.initState();
+app.initGPS();
