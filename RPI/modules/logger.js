@@ -13,7 +13,12 @@ module.exports = (function (){
 		var time = dateTime.create(),
 			currentTime = time.format('d/m/Y H:M:S'),
 			fileName = time.format('Ymd') + '.log',
-			text = '['+currentTime+']' + ' ' + '['+file+']' + ' ' + msg + '\n';
+			text = [
+				'['+currentTime+']',
+				'['+file+']',
+				msg,
+				(err ? ('\n'+ JSON.stringify(err)) : '')
+			].join(' ') + '\n';
 
 		if(Logger.output == 'file') {
 			fs.appendFile(Logger.options.logsFolderPath + fileName, text, function(err) {
