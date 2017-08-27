@@ -1,49 +1,20 @@
-var GPS = require('gps');
+const SerialPort = require('serialport');
+const Serial = new SerialPort('/dev/tty.usbserial', {
+  baudrate: 4800,
+  parser: SerialPort.parsers.readline('\r\n')
+});
+ 
+const GPSReader = require('gps');
+const gpsReader = new GPS;
+ 
+gpsReader.on('data', function(data) {
+	console.log(data, gpsReader.state);
+});
 
-/*parser.on('data', console.log);*/
-/*port.write('ROBOT PLEASE RESPOND\n');*/
+Serial.on('data', function(data) {
+	gpsReader.update(data);
+});
 
-var gpsObject = {
-    readGpsData: function () {
-        /*if (!dbModule.isInit) {
-            return;
-        }*/
-	
-	var data = gps.state;
+const GPS = {};
 
-        if (!data.lat || !data.lon) {
-            return;
-        }
-
-        console.log(data.lat, data.lon);
-
-        /*dbModule.db.query('SELECT * FROM routes_stations;', function (err, result) {
-		if (err) {
-				logger.writeLog('db.txt', err);
-			}
-		
-		result.filter(function (station) {
-		    var latlng = station.latlng.split(',');
-		    var dist = GPS.Distance(latlng[0], latlng[1], data.lat, data.lon) * 1000;
-		
-		    if (dist <= radius) {
-		        if (station.stationOrder === (dbModule.state.curStationOrder + 1)) {
-		            cur_station_id = dbModule.state.curStationOrder + 1;
-		
-		            dbModule.query("UPDATE misc SET station_id = " + station.id + ";", function (err) {
-		                if (err) {
-								logger.writeLog('db.txt', err);
-							}
-		                logger.writeLog('db.txt', 'Current station has changed');
-		            });
-		        } else {
-		
-		        }
-		    }
-		});
-    		});*/
-	}
-};
-
-
-module.exports = gpsObject;
+module.exports = GPS;
