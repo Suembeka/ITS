@@ -44,7 +44,9 @@ stationsInRadius.forEach((found) => {
         }
     // Register found station just in case
     } else {
-        perhapsNewCircle = found < lastFound;
+        // In case we moving to bus station
+        perhapsNewCircle = current > found && found < lastFound;
+        
         lastFound = found;
     }
 });
