@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context path="/ITS">
+    <Resource 
+        name="jdbc/mysql" 
+        driverClassName="com.mysql.jdbc.Driver" 
+        factory="org.apache.tomcat.jdbc.pool.DataSourceFactory"
+        type="javax.sql.DataSource" 
+        url="jdbc:mysql://localhost:3306/its"
+        password="qwerty"  
+        username="root"
+        maxActive="10" maxAge="10000" removeAbandoned="true" scope="Shareable"  
+    />
+</Context>

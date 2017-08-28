@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC 
+ "-//Hibernate/Hibernate Mapping DTD//EN"
+ "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd"> 
+
+<hibernate-mapping>
+    <class name="entity.Transaction" table="transactions">
+        <composite-id>
+            <key-property name="id" column="id"/>
+            <key-property name="transport" column="transport_id" class="entity.Transport" not-null="true"/>
+        </composite-id>
+        <property column="transaction_id" name="transactionId" type="UUID"/>
+        <property column="time" name="time" type="Timestamp"/>
+        <property column="route_id" name="route" type="entity.Route"/>
+        <property column="station_id" name="station" type="entity.Station"/>
+        <property column="card_id" name="cardId" type="int"/>
+        <property column="card_type_id" name="cardType" type="entity.CardType"/>
+        <property column="payment_amount" name="paymentAmount" type="int"/>
+    </class>
+</hibernate-mapping>
+

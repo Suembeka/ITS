@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC 
+ "-//Hibernate/Hibernate Mapping DTD//EN"
+ "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd"> 
+
+<hibernate-mapping>
+    <class name="entity.StationAssociation" table="routes_stations">
+        <id column="id" name="id" type="integer">
+            <generator class="increment"/>
+        </id>
+        <property column="station_by_order" name="stationByOrder" type="int"/>
+        <many-to-one name="station" column="station_id" unique="false" class="entity.Station" not-null="true" />
+        <many-to-one name="route" column="route_id" unique="false" class="entity.Route" not-null="true" />
+    </class>
+</hibernate-mapping>
