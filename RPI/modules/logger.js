@@ -8,7 +8,7 @@ module.exports = (function (){
 
 	Logger.output = 'file';
 	Logger.options = {
-		logsFolderPath: '../logs/'
+		logsFolderPath: 'logs/'
 	};
 
 	Logger.log = function({file, msg, err}) {

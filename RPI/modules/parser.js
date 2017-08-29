@@ -2,26 +2,37 @@
 
 var EventEmitter = require('events');
 
-var Parser = {};
+var cardBlocks = {};
 
-class ArduinoParser extends EventEmitter {
-    tokens = {
-        commandStart: '[',
-        commandEnd: ']',
-        commandSequenceStart: '[S]',
-        commandSequenceEnd: '[E]',
-        commandWrite: '[W(PIN{2})(DATA{16})]',
-        responseRead: '[(PIN{2})(DATA{16})]',
-        responseStatusOK: '[STATUS|OK]',
-        responseStatusFail: '[STATUS|FAIL]'
+class Parser extends EventEmitter {
+    getTokens() {
+        return {
+            commandSequenceStart: '\[S\]',
+            commandSequenceEnd: '\[E\]',
+            commandWrite: '\[W([0-9]{2})(.{16})\]',
+            responseRead: '\[([0-9]{2})(.{16})\]',
+            responseStatusOK: '\[STATUS|OK\]',
+            responseStatusFail: '\[STATUS|FAIL\]'
+        }
     }
 
-    processData = function(data) {
+    parse(data) {
+        var block;
+        data = data.replace(/[\r\n]/g, '');
+        var isTrue = /^\[([0-9]{2})(.{32})]$/.test(data);
+        console.log(data, isTrue);
+
+        if(/\[([0-9]{2})(.{32})]/.test(data)) {
+            block = data.match(/^\[([0-9]{2})(.{32})]$/);
+            cardBlocks[block[1]] = block[2].split(/(.{2})/).filter(function(el){ return el.length > 0; });
+        } else if(/\[E\]/.test(data)) {
+            this.emit('cardFound', cardBlocks);
+            cardBlocks = {};
+        }
         
     }
 };
 
-Parser.arduino = new ArduinoParser();
+Parser = new Parser();
 
-
-modules.exports = Parser;
+module.exports = Parser;
