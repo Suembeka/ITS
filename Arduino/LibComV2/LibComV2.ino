@@ -258,7 +258,7 @@ namespace LibNFC {
   static const uint8_t dataBlocksAmount = 6;
 
   // Block that we need
-  uint8_t dataBlocks[dataBlocksAmount] = { 4, 5, 6, 8, 9, 10 };
+  uint8_t dataBlocks[dataBlocksAmount] = { 0, 4, 5, 6, 8, 9 };
   // Buffer where we store readed blocks
   uint8_t dataBlocksBuffer[dataBlocksAmount][dataBlocksLength] = {};
 
