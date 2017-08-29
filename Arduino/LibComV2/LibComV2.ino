@@ -334,7 +334,7 @@ namespace LibNFC {
 
   void sendData() {
     // Send transmission start sequence command
-    LibDebug::trace(F("[S]"));
+    Serial.println(F("[S]"));
 
     for(uint8_t i = 0; i < dataBlocksAmount; i++) {
       // Send data block start command
@@ -348,7 +348,10 @@ namespace LibNFC {
       
       // Send block bytes
       for(uint8_t j = 0; j < 16; j++) {
-        Serial.print((char)dataBlocksBuffer[i][j]);
+        if (dataBlocksBuffer[i][j] < 0x10) {
+            Serial.print('0');
+        }
+        Serial.print(dataBlocksBuffer[i][j], HEX);
       }
 
       // Send data block end command
@@ -356,7 +359,7 @@ namespace LibNFC {
     }
 
     // Send transmission end sequence command
-    LibDebug::trace(F("[E]"));
+    Serial.println(F("[E]"));
 
     // Register time when we send commands
     LibCom::dataSendTime = millis();
