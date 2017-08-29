@@ -23,7 +23,7 @@ public class Station {
     @Pattern(regexp="^[a-zA-Z0-9 ]+$", message="Name must consist from alphabet, numiracle and space characters only.")
     private String name;
     @NotNull
-    private StationType type;
+    private int type;
     @NotNull
     @Size(min=1, max=50, message="Name must be between 1 and 50 characters long.")
     private String latlng;
@@ -37,12 +37,12 @@ public class Station {
     
     public int getId(){return id;}
     public String getName(){return name;}
-    public StationType getType(){return type;}
+    public int getType(){return type;}
     public String getLatlng(){return latlng;}
     public Set<StationAssociation> getAssociations(){ return associations; }
     public void setId(int id){this.id = id;}
     public void setName(String name){this.name = name;}
-    public void setType(StationType type){this.type = type;}
+    public void setType(int type){this.type = type;}
     public void setLatlng(String latlng){this.latlng = latlng;} 
     public void setAssociations(Set<StationAssociation>  associations){ this.associations = associations; }
     

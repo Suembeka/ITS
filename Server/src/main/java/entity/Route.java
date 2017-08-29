@@ -26,7 +26,7 @@ public class Route {
     @Pattern(regexp="^[a-zA-Z0-9 ]+$", message="Name must consist from alphabet, numiracle and space characters only.")
     private String name;
     @NotNull
-    private RouteType type;
+    private int type;
     private Set<StationAssociation> stations;
     
     private static final Logger log = Logger.getLogger(Route.class.getName());
@@ -37,11 +37,11 @@ public class Route {
     
     public int getId(){return id;}
     public String getName(){return name;}
-    public RouteType getType(){return type;}
+    public int getType(){return type;}
     public Set<StationAssociation> getAssociations(){ return stations; }
     public void setId(int id){this.id = id;}
     public void setName(String name){this.name = name;}
-    public void setType(RouteType type){this.type = type;}
+    public void setType(int type){this.type = type;}
     public void setAssociations(Set<StationAssociation>  stations){ this.stations = stations; }
     
     public void addStation(Station station, int order) throws SQLException{ 

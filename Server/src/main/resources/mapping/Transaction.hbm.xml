@@ -14,7 +14,7 @@
         <property column="route_id" name="route" type="entity.Route"/>
         <property column="station_id" name="station" type="entity.Station"/>
         <property column="card_id" name="cardId" type="int"/>
-        <property column="card_type_id" name="cardType" type="entity.CardType"/>
+        <property column="card_type" name="cardType" type="int"/>
         <property column="payment_amount" name="paymentAmount" type="int"/>
     </class>
 </hibernate-mapping>

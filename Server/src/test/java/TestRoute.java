@@ -21,11 +21,10 @@ public class TestRoute extends TestCase {
     int type;
     Route rout = new Route();
     rout.setName("test");
-    rout.setType((RouteType) factory.getEntityDAO().getAll(RouteType.class.getName()).toArray()[0]);
-    type = rout.getType().getId();
+    rout.setType(1);
     factory.getEntityDAO().add(rout);
     rout = (Route) factory.getEntityDAO().getById(Route.class.getName(), rout.getId());
-    if(!rout.getName().equals("test")||rout.getType().getId()!=type)
+    if(!rout.getName().equals("test")||rout.getType()!=1)
         throw new Exception("Не соответствуют"); 
     rout.setName("test1");
     factory.getEntityDAO().update(rout.getId(), rout);

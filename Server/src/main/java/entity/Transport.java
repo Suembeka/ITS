@@ -24,7 +24,7 @@ public class Transport {
     @NotNull
     private Route route;
     @NotNull
-    private TransportType type;
+    private int type;
     @NotNull
     private Driver driver;
     
@@ -33,12 +33,12 @@ public class Transport {
     public  int getId(){ return this.id; }
     public  String getGovNumber(){ return this.govNumber; }
     public  Route getRoute(){ return this.route; }
-    public  TransportType getType(){ return this.type; }
+    public  int getType(){ return this.type; }
     public  Driver getDriver(){ return this.driver; }
     public void setId( int id){ this.id = id; }
     public void setGovNumber( String govNumber){ this.govNumber = govNumber; }
     public void setRoute( Route route){ this.route = route; }
-    public void setType( TransportType type){ this.type = type; }
+    public void setType( int type){ this.type = type; }
     public void setDriver( Driver driver){ this.driver = driver; }
     
 }

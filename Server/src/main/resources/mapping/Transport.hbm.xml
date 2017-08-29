@@ -12,19 +12,12 @@
         <property column="name" name="name" type="string"/>
     </class>
     
-    <class name="entity.TransportType" table="transport_types">
-        <id column="id" name="id" type="integer">
-            <generator class="increment"/>
-        </id>
-        <property column="name" name="name" type="string"/>
-    </class>
-    
     <class name="entity.Transport" table="transports">
         <id column="id" name="id" type="integer">
             <generator class="increment"/>
         </id>
         <property column="transport_gov_num" name="govNumber" type="string"/>
-        <many-to-one name="type" column="type_id" unique="false" class="entity.TransportType" not-null="true" />
+        <property name="type" column="type" type="integer" />
         <many-to-one name="driver" column="driver_id" unique="true" class="entity.Driver" not-null="true" />  
     </class>
     

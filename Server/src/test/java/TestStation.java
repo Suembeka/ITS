@@ -22,11 +22,10 @@ public class TestStation extends TestCase {
     Station st = new Station();
     st.setName("test");
     st.setLatlng("1312156");
-    st.setType((StationType) factory.getEntityDAO().getAll(StationType.class.getName()).toArray()[0]);
-    type = st.getType().getId();
+    st.setType(1);
     factory.getEntityDAO().add(st);
     st = (Station) factory.getEntityDAO().getById(Station.class.getName(), st.getId());
-    if(!st.getName().equals("test")||st.getType().getId()!=type)
+    if(!st.getName().equals("test")||st.getType()!=1)
         throw new Exception("Не соответствуют"); 
     st.setName("test1");
     factory.getEntityDAO().update(st.getId(), st);

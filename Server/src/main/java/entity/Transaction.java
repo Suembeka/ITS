@@ -30,7 +30,7 @@ public class Transaction {
     @NotNull
     private int cardId;
     @NotNull
-    private CardType cardType;
+    private int cardType;
     private int paymentAmount;
     
     
@@ -43,7 +43,7 @@ public class Transaction {
     public  Route getRoute(){ return this.route; }
     public  Station getStation(){ return this.station; }
     public  int getCardId(){ return this.cardId; }
-    public  CardType getCardType(){ return this.cardType; }
+    public  int getCardType(){ return this.cardType; }
     public  int getPaymentAmount(){ return this.paymentAmount; }
     public void setId( TransactionId id){ this.id = id; }
     public void setTransactionId( UUID transactionId){ this.transactionId = transactionId; }
@@ -52,7 +52,7 @@ public class Transaction {
     public void setRoute( Route route){ this.route = route; }
     public void setStation( Station station){ this.station = station; }
     public void setCardId( int cardId){ this.cardId = cardId; }
-    public void setCardType( CardType cardType){ this.cardType = cardType; }
+    public void setCardType( int cardType){ this.cardType = cardType; }
     public void setPaymentAmount( int paymentAmount){ this.paymentAmount = paymentAmount; }
     
     
