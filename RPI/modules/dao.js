@@ -11,7 +11,7 @@ var DAO = {
         port: '/var/run/mysqld/mysqld.sock',
         user: 'rpibus',
         password: '12345678qwerty',
-        database: 'bus_system'
+        database: 'its_rpi'
     },
 
     connect: function () {
@@ -43,7 +43,7 @@ var DAO = {
 
     // TODO: move to controller
     db: {},
-    init: function () {
+    init: function (GPSInc) {
         "use strict";
         DAO.connect();
         DAO.db = DAO.connection;
@@ -74,11 +74,11 @@ var DAO = {
     },
 
     GPS: {
-        curStation: 1,
-        curStationOrder: 1,
+        curStation: 0,
+        curStationOrder: 0,
         circlesCount: 0,
         stationsLatLng: null,
-        checkedStations: [],
+        distances: [],
 
         allStations: function () {
             DAO.connection.query('SELECT latlng, station_by_order FROM stations, route_stations WHERE stations.id = route_stations.station_id;', function (err, result) {
@@ -102,16 +102,6 @@ var DAO = {
                     Logger.writeLog('Circles have increased...');
                 }
             });
-        },
-
-        addStationsSequence: function () {
-            for (let i = 0; i < DAO.GPS.checkedStations.length; i++) {
-                DAO.connection.query('INSERT INTO `st_history` (circle_id, serial_number, station_by_order) VALUES (' + DAO.GPS.circlesCount + ', ' + i + ', ' + DAO.GPS.checkedStations[i] + ');', function (err) {
-                    if (!DAO.logError(err)) {
-                        Logger.writeLog('addStationsSequence have done...');
-                    }
-                });
-            }
         }
     }
 };
