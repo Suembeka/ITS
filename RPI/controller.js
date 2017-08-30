@@ -2,14 +2,17 @@
 
 const DAO = require('./modules/dao.js');
 const Logger = require('./modules/logger.js');
-const GPS = require('./modules/gps.js');
+//const GPS = require('./modules/gps.js');
+const Arduino = require('./modules/arduino.js');
 
 class App {
-	state = {
-		currentStation: null,
-		transportID: null,
-		paymentAmount: null
-	}
+	getCurrentStation(){ return this.currentStation; }
+	getTransportID(){ return this.transportID; }
+	getPaymentAmount(){ return this.paymentAmount; }
+	
+	setCurrentStation(val){ currentStation = val; }
+	setTransportID(val){ transportID = val; }
+	setPaymentAmount(val){ paymentAmount = val; }
 
 	initDB() {
 		DAO.connect();
@@ -17,17 +20,35 @@ class App {
 
 	initState() {
 		const appInitData = DAO.getAppInitData();
-		this.state.currentStation = appInitData.currentStation;
-		this.state.transportID = appInitData.transportID;
-		this.state.paymentAmount = appInitData.paymentAmount;
+		setCurrentStation(appInitData.currentStation);
+		setTransportID(appInitData.transportID);
+		setPaymentAmount(appInitData.paymentAmount);
 	}
 
 	initGPS() {
-		GPS.init(this.state);
-	} 
+		//GPS.init(this.state);
+	}
+	
+	initArduino() {
+		Arduino.on('payment', function(card) {
+			processPayment(card);
+		});
+	}
+	
+	processPayment(card) {
+		card = {
+			cardType: 1,
+			balance: 5000,
+			expireTime: 1506077646044,
+			lastTransportID: 123,
+			lastPaytime: 1504077646044
+		};
+		Arduino.write(card);
+	}
 };
 
 const app = new App();
 app.initDB();
 app.initState();
 app.initGPS();
+app.initArduino();

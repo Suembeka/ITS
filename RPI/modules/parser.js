@@ -31,6 +31,10 @@ class Parser extends EventEmitter {
         }
         
     }
+	
+	writeToCard(blocks) {
+		console.log(blocks);
+	}
 };
 
 Parser = new Parser();
