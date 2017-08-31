@@ -20,10 +20,11 @@
         <property name="dialect">org.hibernate.dialect.MySQL5Dialect</property>
 
     
-    <mapping resource="mapping/Driver.hbm.xml"/>
     <mapping resource="mapping/StationAssociation.hbm.xml"/> 
     <mapping resource="mapping/Station.hbm.xml"/>   
     <mapping resource="mapping/Route.hbm.xml"/>
+    <mapping resource="mapping/Transport.hbm.xml"/>
+    <mapping resource="mapping/Transaction.hbm.xml"/>
      
   </session-factory>
 </hibernate-configuration>

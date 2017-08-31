@@ -22,7 +22,7 @@ public class TransactionId implements Serializable{
     private static final Logger log = Logger.getLogger(TransactionId.class.getName());
     
     public int getId(){ return id; }
-    public int getTransactionId(){ return transportId; }
+    public int getTransportId(){ return transportId; }
     public void setId(int id){ this.id = id; }
     public void setTransportId(int transportId){ this.transportId = transportId; }
     

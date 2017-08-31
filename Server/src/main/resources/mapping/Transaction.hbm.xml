@@ -5,14 +5,15 @@
 
 <hibernate-mapping>
     <class name="entity.Transaction" table="transactions">
-        <composite-id>
-            <key-property name="id" column="id"/>
-            <key-property name="transport" column="transport_id" class="entity.Transport" not-null="true"/>
+        <composite-id name="id" class="entity.TransactionId">
+            <key-property name="id" column="id" type="int"/>
+            <key-property name="transportId" column="transport_id" type="int"/>
         </composite-id>
-        <property column="transaction_id" name="transactionId" type="UUID"/>
-        <property column="time" name="time" type="Timestamp"/>
-        <property column="route_id" name="route" type="entity.Route"/>
-        <property column="station_id" name="station" type="entity.Station"/>
+        <!--<property column="transaction_id" name="transactionId" type="java.util.UUID"/>
+        --><property column="time" name="time" type="timestamp"/>
+        <many-to-one name="route" column="route_id" unique="false" class="entity.Route" not-null="true" />
+        <many-to-one name="station" column="statoion_id" unique="false" class="entity.Station" not-null="true" />
+        <many-to-one name="transport" column="transport_id" unique="false" class="entity.Transport" not-null="true" insert="false" update="false"/>
         <property column="card_id" name="cardId" type="int"/>
         <property column="card_type" name="cardType" type="int"/>
         <property column="payment_amount" name="paymentAmount" type="int"/>

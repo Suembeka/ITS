@@ -14,6 +14,7 @@
             <key column="route_id"/>
             <one-to-many class="entity.StationAssociation"/>
         </set>
+        
     
     </class>
 </hibernate-mapping>

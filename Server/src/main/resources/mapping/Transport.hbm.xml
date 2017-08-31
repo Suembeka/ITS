@@ -12,17 +12,40 @@
         <property column="name" name="name" type="string"/>
     </class>
     
+    <class name="entity.DriverAssociation" table="transports_drivers">
+        <id column="id" name="id" type="integer">
+            <generator class="increment"/>
+        </id>
+        <property column="time" name="time" type="timestamp"/>
+        <property column="is_active" name="isActive" type="integer"/>
+        <many-to-one name="driver" column="driver_id" unique="false" class="entity.Driver" not-null="true" />
+    </class>
+    
+    <class name="entity.RouteAssociation" table="transports_routes">
+        <id column="id" name="id" type="integer">
+            <generator class="increment"/>
+        </id>
+        <property column="time" name="time" type="timestamp"/>
+        <property column="is_active" name="isActive" type="integer"/>
+        <many-to-one name="route" column="route_id" unique="false" class="entity.Route" not-null="true" />
+    </class>
+    
     <class name="entity.Transport" table="transports">
         <id column="id" name="id" type="integer">
             <generator class="increment"/>
         </id>
         <property column="transport_gov_num" name="govNumber" type="string"/>
         <property name="type" column="type" type="integer" />
-        <many-to-one name="driver" column="driver_id" unique="true" class="entity.Driver" not-null="true" />  
-    </class>
-    
-    
-    
-    
+        <list name="driversHistory" lazy="false">
+            <key column="transport_id"/>
+            <list-index column="is_active"/>
+            <one-to-many class="entity.DriverAssociation"/>
+        </list>
+        <list name="routesHistory" lazy="false">
+            <key column="transport_id"/>
+            <list-index column="is_active"/>
+            <one-to-many class="entity.RouteAssociation"/>
+        </list>
+    </class>   
     
 </hibernate-mapping>

@@ -5,6 +5,8 @@
  */
 package entity;
 
+
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
@@ -22,23 +24,29 @@ public class Transport {
     @Pattern(regexp="^[A-Z0-9]+$", message="Name must consist from alphabet in upper case and number characters only.")
     private String govNumber;
     @NotNull
-    private Route route;
+    private List<RouteAssociation> routes;
     @NotNull
     private int type;
     @NotNull
-    private Driver driver;
+    private List<DriverAssociation> drivers;
+    private Driver curentDriver;
+    private Route curentRoute;
     
     private static final Logger log = Logger.getLogger(Transport.class.getName());
     
     public  int getId(){ return this.id; }
     public  String getGovNumber(){ return this.govNumber; }
-    public  Route getRoute(){ return this.route; }
+    public  List<RouteAssociation> getRoutesHistory(){ return this.routes; }
     public  int getType(){ return this.type; }
-    public  Driver getDriver(){ return this.driver; }
+    public  List<DriverAssociation> getDriversHistory(){ return this.drivers; }
     public void setId( int id){ this.id = id; }
     public void setGovNumber( String govNumber){ this.govNumber = govNumber; }
-    public void setRoute( Route route){ this.route = route; }
+    public void setRoutesHistory( List<RouteAssociation> routes){ this.routes = routes; }
     public void setType( int type){ this.type = type; }
-    public void setDriver( Driver driver){ this.driver = driver; }
+    public void setDriversHistory( List<DriverAssociation> drivers){ this.drivers = drivers; }
     
+    public Driver getDriver(){ return curentDriver; }
+    public Route getRoute(){ return curentRoute; }
+    
+
 }

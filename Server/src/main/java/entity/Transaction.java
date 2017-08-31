@@ -5,6 +5,7 @@
  */
 package entity;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.UUID;
 import javax.validation.constraints.NotNull;
@@ -14,7 +15,7 @@ import org.apache.log4j.Logger;
  *
  * @author ksinn
  */
-public class Transaction {
+public class Transaction implements Serializable{
     
     private TransactionId id;
     @NotNull
