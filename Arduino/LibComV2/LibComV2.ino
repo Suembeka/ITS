@@ -49,8 +49,6 @@ namespace LibState {
   bool check(uint8_t _state) { return current == _state; }
 };
 
-
-
 // Fixed size stack
 // TODO: REWRITE
 class CommandStack {
@@ -369,6 +367,7 @@ namespace LibNFC {
   }
 
   bool writeToCard(int block, char _data[16]) {
+    // If auth fails
     if(!authBlock(block)) {
         return false;
     } else {
@@ -381,6 +380,7 @@ namespace LibNFC {
     }
   }
 
+  // TODO: REWRITE
   void writeDataOnCard () {
 
     Command *cmd = LibSerial::cmdStack.pop();
@@ -421,6 +421,7 @@ namespace LibNFC {
   }
 };
 //==============================================================================
+// TODO: REWRITE
 namespace LibSerial {
   class CommandBuffer {
   private:
@@ -574,12 +575,12 @@ void loop() {
   case STATE::WAITING_CARD:     LibNFC::listenNFC(); break;
   case STATE::READING_CARD:     LibNFC::readCard(); break;
   case STATE::SENDING_DATA:     LibNFC::sendData(); break;
-  /*case STATE::WAITING_RESPONSE:
+  case STATE::WAITING_RESPONSE:
   case STATE::READING_RESPONSE: LibSerial::listenSerial(); break;
   case STATE::PARSING_COMMAND:  LibSerial::parseCommand(); break;
   case STATE::WRITING_CARD:     LibNFC::writeDataOnCard(); break;
   case STATE::SHOWING_ERROR:    LibNotify::notifyError(); break;
-  case STATE::REPORTING_RESULT: LibSerial::reportWriting(); break;*/
+  case STATE::REPORTING_RESULT: LibSerial::reportWriting(); break;
   default: break;
   }
 }
