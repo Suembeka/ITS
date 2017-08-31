@@ -56,7 +56,7 @@ namespace LibError {
 };
 //==============================================================================
 namespace LibCom {
-  uint32_t responseTimelimit = 5000;
+  uint32_t responseTimelimit = 1000;
   uint32_t dataSendTime = 0;
 };
 //==============================================================================
@@ -187,10 +187,10 @@ namespace LibNotify {
 };
 namespace LibSerial {
   namespace Buffer {
-    char buffer[40] = {0};
+    uint8_t buffer[40] = {0};
     uint8_t cursor = 0;
 
-    void add(char character) {
+    void add(uint8_t character) {
       if(cursor > 39) {
         cursor = 0;
         LibDebug::trace(F("[EXCEPTION|SERIAL BUFFER OVERFLOW]"));
@@ -201,7 +201,7 @@ namespace LibSerial {
       cursor = 0;
     }
 
-    char get(uint8_t index) {
+    uint8_t get(uint8_t index) {
       if(index > cursor) {
         return '0';  
       } else {
@@ -217,12 +217,12 @@ namespace LibSerial {
       }
     }
 
-    char getCurrent() {
+    uint8_t getCurrent() {
       return get(getCursor());
     }
 
     uint8_t length() { return cursor; }
-    char* getBuffer() { return buffer; }
+    uint8_t* getBuffer() { return buffer; }
   };
 
   namespace Packet {
@@ -244,18 +244,21 @@ namespace LibSerial {
       CardBlock block;
 
       // Fetch Block number
-      char blockNum[2];
-      strncpy(blockNum, Buffer::getBuffer() + 2, 2);
+      uint8_t blockNum[3];
+      blockNum[2] = '\0';
+      memcpy(blockNum, Buffer::getBuffer() + 2, 2);
       block.num = strtol(blockNum, nullptr, 10);
 
       // Fetch block data
-      unsigned char blockData[16];
-      char sym[2];
+      uint8_t blockData[16];
+      uint8_t sym[3];
+      sym[2] = '\0';
       for(uint8_t i = 0, j = 0; i < 16; i++, j += 2) {
-        strncpy(sym, Buffer::getBuffer() + 4 + j, 2);
+        memcpy(sym, Buffer::getBuffer() + 4 + j, 2);
         blockData[i] = strtol(sym, nullptr, 16);
+        block.data[i] = blockData[i];
       }
-
+      
       blocks[cursor++] = block;
     }
   };
@@ -449,16 +452,12 @@ namespace LibNFC {
     LibState::set(STATE::WAITING_RESPONSE);
   }
 
-  bool writeToCard(int blockNum, uint8_t _data[16]) {
+  bool writeToCard(uint8_t blockNum, uint8_t _data[16]) {
     // If auth fails
     if(!authBlock(blockNum)) {
         LibDebug::trace(F("[WARNING|CANNOT WRITE TO CARD]"));
         return false;
     } else {
-      //uint8_t data[16];
-      //strncpy(data, _data, 16);
-      ////uint8_t *data = reinterpret_cast<uint8_t *>(_data);
-      ////memcpy(data, _data, 16);
       //return true;
       return nfc.mifareclassic_WriteDataBlock (blockNum, _data);
     }
@@ -477,8 +476,16 @@ namespace LibNFC {
     uint32_t timeLimit = 1000;
 
     for(uint8_t i = 0; i < LibSerial::Packet::length; i++) {
+      /*
+      Serial.println();
+      for(short k=0; k<16; k++) {
+        Serial.print(LibSerial::Packet::blocks[i].data[k]);
+      }
+      Serial.println();
+      */
       //LibDebug::trace(F("BLOCKNUM: "), LibSerial::Packet::blocks[i].num);
       //LibDebug::trace(F("BLOCKDATA: "), LibSerial::Packet::blocks[i].data);
+      
       
       currentTime = millis();
       while(millis() - currentTime < timeLimit) {
