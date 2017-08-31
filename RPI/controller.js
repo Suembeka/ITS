@@ -15,24 +15,22 @@ class App {
 	setPaymentAmount(val){ paymentAmount = val; }
 
 	initDB() {
-		DAO.connect();
+		// DAO.connect();
 	}
 
 	initState() {
-		const appInitData = DAO.getAppInitData();
-		setCurrentStation(appInitData.currentStation);
-		setTransportID(appInitData.transportID);
-		setPaymentAmount(appInitData.paymentAmount);
+		// const appInitData = DAO.getAppInitData();
+		// setCurrentStation(appInitData.currentStation);
+		// setTransportID(appInitData.transportID);
+		// setPaymentAmount(appInitData.paymentAmount);
 	}
 
 	initGPS() {
-		//GPS.init(this.state);
+		// GPS.init(this.state);
 	}
 	
 	initArduino() {
-		Arduino.on('payment', function(card) {
-			processPayment(card);
-		});
+		Arduino.on('payment', (card) => this.processPayment(card));
 	}
 	
 	processPayment(card) {
