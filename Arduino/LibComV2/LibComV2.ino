@@ -15,97 +15,63 @@ enum STATE : uint8_t {
   SENDING_DATA,
   WAITING_RESPONSE,
   READING_RESPONSE,
-  PARSING_COMMAND,
   WRITING_CARD,
   REPORTING_RESULT,
   SHOWING_ERROR
 };
 
+// Packets coming from RPI
+enum PACKET : uint8_t {
+  START,
+  END,
+  BLOCK_WRITE,
+  SHOW_ERROR 
+};
+
 // Errors
-enum NOTIFY_ERRORS : uint8_t {
+enum SHOW_ERROR : uint8_t {
   NOT_ENOUGH_MONEY,
   CARD_EXPIRED
 };
 
-// Commands coming from RPI
-enum COMMAND : uint8_t {
-  START,
-  END,
-  BLOCK_WRITE
-};
-
-// Command structure
+// Block structure on card
 typedef struct {
-    short type;
-    short blockNum;
-    char blockData[16];
-} Command;
+    uint8_t num;
+    uint8_t data[16];
+} CardBlock;
 
-
+//==============================================================================
 namespace LibState {
   uint8_t current;
   
   void set(uint8_t _state) { current = _state; }
   bool check(uint8_t _state) { return current == _state; }
 };
+//==============================================================================
+namespace LibError {
+  uint8_t current;
 
-// Fixed size stack
-// TODO: REWRITE
-class CommandStack {
-private:
-  static const short commandsAmount = 20;
-  short currentPush = 0;
-  short currentPop = 0;
-
-  Command stack[commandsAmount];
-public:
-  void push(short type, short blockNum=0, char blockData[16]=0) {
-    if(currentPush == commandsAmount) {Serial.println("CMD STACK OVERFLOW"); return; }
-    Command newCmd;
-    newCmd.type = type;
-    newCmd.blockNum = blockNum;
-    strncpy(newCmd.blockData, blockData, 16);
-    stack[currentPush] = newCmd;
-    currentPush++;
-  }
-  Command* pop() {
-    if(currentPop >= currentPush) {
-      clear();
-      return nullptr;
-    } else {
-      currentPop++;
-      return &stack[currentPop-1];
-    }
-  }
-  void clear() {
-    currentPush = 0;
-    currentPop = 0;
-  }
+  void set(uint8_t _error) { current = _error; }
+  bool check(uint8_t _error) { return current == _error; }
 };
-
 //==============================================================================
 namespace LibCom {
   uint32_t responseTimelimit = 5000;
   uint32_t dataSendTime = 0;
 };
 //==============================================================================
-namespace LibSerial {
-  bool cmdStartFound = false;
-  bool cmdEndFound = false;
-
-  const uint8_t cmdStart = '['; // 91
-  const uint8_t cmdEnd = ']'; // 93
-
-  CommandStack cmdStack;
-  
-  void executeCommand();
-  void parseCommand ();
-  void readSerialBuffer();
-  void listenSerial();
-  void reportWriting();
+namespace LibDebug {
+  inline void PRINT_TRACE(String MSG) { Serial.println(MSG); }
+  inline void beginTrace(String MSG) { PRINT_TRACE(MSG); }
+  inline void trace(String MSG)  { PRINT_TRACE(MSG); }
+  inline void endTrace(String MSG) { PRINT_TRACE(MSG); }
+  inline void trace(String TAG, String MSG) { PRINT_TRACE(TAG + " " + MSG); }
+  inline void trace(String TAG, int MSG) { PRINT_TRACE(TAG + " " + String(MSG)); }
+  inline void trace(String TAG, long MSG) { PRINT_TRACE(TAG + " " + String(MSG)); }
+  inline void trace(String TAG, uint8_t MSG) { PRINT_TRACE(TAG + " " + String(MSG)); }
 };
 //==============================================================================
-// TODO: make it static (fixed size)
+// TODO: make it simple
 namespace LibTime {
   using callbackfn_t = void(*)();
   static const uint8_t timersAmount = 10;
@@ -137,20 +103,20 @@ namespace LibTime {
   void enabled(uint8_t index) { setFlag(timers[index].flags, isEnabledFlag); }
   void disable(uint8_t index) { unsetFlag(timers[index].flags, isEnabledFlag); }
 
-  uint8_t getTimerIndex() {
+  short getTimerIndex() {
     for(uint8_t i = 0; i < timersAmount; i++) {
       // if not exist then return free index
       if(timers[i].flags == 0) { return timers[i].index; }
     }
-    // Error
-    Serial.println(F("TIMER STACK OVERFLOW"));
+    LibDebug::trace(F("[EXCEPTION|TIMER STACK OVERFLOW]"));
     return -1;
   }
 
-  uint8_t setTimer(uint16_t timeout, bool repeat=false, callbackfn_t fn=nullptr, uint8_t oldIndex=100) {
-    uint8_t freeIndex;
+  short setTimer(uint16_t timeout, bool repeat=false, callbackfn_t fn=nullptr, uint8_t oldIndex=100) {
+    short freeIndex;
     if(currentIndex >= timersAmount) {
       freeIndex = getTimerIndex();
+      if(freeIndex == -1) { return -1;}
     } else if(oldIndex != 100) {
       freeIndex = oldIndex;
     } else {
@@ -203,23 +169,6 @@ namespace LibTime {
   }
 };
 //==============================================================================
-namespace LibError {
-  uint8_t current;
-
-  void set(uint8_t _error) { current = _error; }
-  bool check(uint8_t _error) { return current == _error; }
-};
-//==============================================================================
-namespace LibDebug {
-  inline void PRINT_TRACE(String MSG) { Serial.println(MSG); }
-  inline void beginTrace(String MSG) { PRINT_TRACE(MSG); }
-  inline void trace(String MSG)  { PRINT_TRACE(MSG); }
-  inline void endTrace(String MSG) { PRINT_TRACE(MSG); }
-  inline void trace(String TAG, String MSG) { PRINT_TRACE(TAG + " " + MSG); }
-  inline void trace(String TAG, int MSG) { PRINT_TRACE(TAG + " " + String(MSG)); }
-  inline void trace(String TAG, long MSG) { PRINT_TRACE(TAG + " " + String(MSG)); }
-};
-//==============================================================================
 namespace LibNotify {
   void notifyOff() {
     digitalWrite(5, LOW);
@@ -234,6 +183,139 @@ namespace LibNotify {
     pinMode(6, OUTPUT);
     digitalWrite(6, HIGH);
     LibTime::setTimeout(&LibNotify::notifyOff, 1000);
+  }
+};
+namespace LibSerial {
+  namespace Buffer {
+    char buffer[40] = {0};
+    uint8_t cursor = 0;
+
+    void add(char character) {
+      if(cursor > 39) {
+        cursor = 0;
+        LibDebug::trace(F("[EXCEPTION|SERIAL BUFFER OVERFLOW]"));
+      }
+      buffer[cursor++] = character;
+    }
+    void clear() {
+      cursor = 0;
+    }
+
+    char get(uint8_t index) {
+      if(index > cursor) {
+        return '0';  
+      } else {
+        return buffer[index];
+      }
+    }
+
+    uint8_t getCursor() {
+      if(cursor == 0) {
+        return 0;
+      } else {
+        return cursor - 1;
+      }
+    }
+
+    char getCurrent() {
+      return get(getCursor());
+    }
+
+    uint8_t length() { return cursor; }
+    char* getBuffer() { return buffer; }
+  };
+
+  namespace Packet {
+    uint8_t const maxBlocks = 10;
+    uint8_t cursor = 0;
+    uint8_t length = 0;
+    CardBlock blocks[maxBlocks];
+
+    void clear() { length = 0; cursor = 0; }
+    void start() { clear(); }
+    void end() { length = cursor; }
+    
+    void addMessage() {
+      if(cursor >= maxBlocks) {
+        LibDebug::trace(F("[EXCEPTION|MESSAGES STACK OVERFLOW]"));
+        return;
+      }
+      
+      CardBlock block;
+
+      // Fetch Block number
+      char blockNum[2];
+      strncpy(blockNum, Buffer::getBuffer() + 2, 2);
+      block.num = strtol(blockNum, nullptr, 10);
+
+      // Fetch block data
+      unsigned char blockData[16];
+      char sym[2];
+      for(uint8_t i = 0, j = 0; i < 16; i++, j += 2) {
+        strncpy(sym, Buffer::getBuffer() + 4 + j, 2);
+        blockData[i] = strtol(sym, nullptr, 16);
+      }
+
+      blocks[cursor++] = block;
+    }
+  };
+
+  bool messageStart = false;
+  bool messageEnd = false;
+  
+  void clearBufferState() {
+    messageStart = false;
+    messageEnd = false;
+    Buffer::clear();
+  }
+
+   void parseError () {
+
+    // TODO: Notify when error
+
+  }
+
+  void readSerial() {
+    Buffer::add(Serial.read());
+    if(Buffer::getCurrent() == '[') { messageStart = true; }
+    if(Buffer::getCurrent() == ']') { messageEnd = true; }
+    if(Buffer::getCurrent() != '[' && !messageStart) { clearBufferState(); }
+
+    if(messageStart && messageEnd) {
+      LibState::set(STATE::READING_RESPONSE);
+      switch(Buffer::get(1)) {
+      case 'S':
+        Packet::start();
+        break;
+      case 'W':
+        Packet::addMessage();
+        break;
+      case 'E':
+        Packet::end();
+        LibState::set(STATE::WRITING_CARD);
+        break;
+      case 'F':
+        parseError();
+        break;
+      default:
+        break;
+      }
+      clearBufferState();
+     }
+  }
+
+  void listenSerial() {
+    // Response timeout
+    if(LibState::check(STATE::WAITING_RESPONSE)) {
+      if(millis() - LibCom::dataSendTime > LibCom::responseTimelimit) {
+        LibState::set(STATE::WAITING_CARD);
+        return;
+      }
+    }
+    
+    while(Serial.available() > 0) {
+      readSerial();
+    }
   }
 };
 //==============================================================================
@@ -260,7 +342,7 @@ namespace LibNFC {
   // Buffer where we store readed blocks
   uint8_t dataBlocksBuffer[dataBlocksAmount][dataBlocksLength] = {};
 
-  // Is write to card is successful
+  // Is write on card is successful
   bool isWriteSuccessful = false;
 
   void listenNFC() {
@@ -287,6 +369,9 @@ namespace LibNFC {
   }
 
   void readCard() {
+
+    LibDebug::trace(F("[INFO|CARD FOUND]"));
+    
     bool isReadSuccessful = false;
     bool isAuthSuccessful = false;
 
@@ -316,26 +401,24 @@ namespace LibNFC {
 
     // Log errors
     // TODO: specify log format
-    if(!isAuthSuccessful) { LibDebug::trace(F("---CANNOT AUTH---")); }
-    if(!isReadSuccessful) { LibDebug::trace(F("---CANNOT READ---")); }
+    if(!isAuthSuccessful) { LibDebug::trace(F("[NOTICE|CANNOT AUTH CARD BLOCKS]")); }
+    if(!isReadSuccessful) { LibDebug::trace(F("[NOTICE|CANNOT READ CARD BLOCKS]")); }
 
     // If all block was read then send to RPI
     // If not then log error
     if(isReadSuccessful) {
-      LibDebug::trace(F("---READ OK---"));
       LibState::set(STATE::SENDING_DATA);
     } else {
-      LibDebug::trace(F("---READ FAIL---"));
       LibState::set(STATE::WAITING_CARD);
     }
   }
 
   void sendData() {
-    // Send transmission start sequence command
+    // Send packet start message
     Serial.println(F("[S]"));
 
     for(uint8_t i = 0; i < dataBlocksAmount; i++) {
-      // Send data block start command
+      // Send data block start token
       Serial.print('[');
 
       // Send block number with leading zero
@@ -352,196 +435,77 @@ namespace LibNFC {
         Serial.print(dataBlocksBuffer[i][j], HEX);
       }
 
-      // Send data block end command
+      // Send data block end token
       Serial.println(']');
     }
 
-    // Send transmission end sequence command
+    // Send packet end message
     Serial.println(F("[E]"));
 
-    // Register time when we send commands
+    // Register time when we send packets
     LibCom::dataSendTime = millis();
 
     // Switch arduino to waiting response state
     LibState::set(STATE::WAITING_RESPONSE);
   }
 
-  bool writeToCard(int block, char _data[16]) {
+  bool writeToCard(int blockNum, uint8_t _data[16]) {
     // If auth fails
-    if(!authBlock(block)) {
-        LibDebug::trace(F("---AUTH FAIL ON WRITE---"));
+    if(!authBlock(blockNum)) {
+        LibDebug::trace(F("[WARNING|CANNOT WRITE TO CARD]"));
         return false;
     } else {
-      uint8_t data[16];
-      strncpy(data, _data, 16);
+      //uint8_t data[16];
+      //strncpy(data, _data, 16);
       ////uint8_t *data = reinterpret_cast<uint8_t *>(_data);
       ////memcpy(data, _data, 16);
-      return true;
-      //return nfc.mifareclassic_WriteDataBlock (block, data);
+      //return true;
+      return nfc.mifareclassic_WriteDataBlock (blockNum, _data);
     }
   }
 
-  // TODO: REWRITE
   void writeDataOnCard () {
     isWriteSuccessful = false;
 
-    Command *cmd = LibSerial::cmdStack.pop();
-    if(cmd->type != COMMAND::START) {
-      LibSerial::cmdStack.clear();
+    if(LibSerial::Packet::length == 0) {
       LibState::set(STATE::WAITING_RESPONSE);
+      LibSerial::Packet::clear();
       return;
     }
 
     uint32_t currentTime;
     uint32_t timeLimit = 1000;
 
-    while((cmd = LibSerial::cmdStack.pop())->type != COMMAND::END) {
-      /*
-      //LibDebug::trace(F("CMDTYPE: "), cmd->type);
-      LibDebug::trace(F("BLOCKNUM: "), cmd->blockNum);
-      LibDebug::trace(F("BLOCKDATA: "), cmd->blockData);
-      */
-      if(cmd->type != COMMAND::BLOCK_WRITE) {
-        LibSerial::cmdStack.clear();
-        LibState::set(STATE::WAITING_RESPONSE);
-        return;
-      }
-
+    for(uint8_t i = 0; i < LibSerial::Packet::length; i++) {
+      //LibDebug::trace(F("BLOCKNUM: "), LibSerial::Packet::blocks[i].num);
+      //LibDebug::trace(F("BLOCKDATA: "), LibSerial::Packet::blocks[i].data);
+      
       currentTime = millis();
       while(millis() - currentTime < timeLimit) {
-        if(LibNFC::writeToCard(cmd->blockNum, cmd->blockData)) {
-           isWriteSuccessful = true;
-           break;
-        } else {
-          isWriteSuccessful = false;  
+        isWriteSuccessful = LibNFC::writeToCard(LibSerial::Packet::blocks[i].num, LibSerial::Packet::blocks[i].data);
+        if(isWriteSuccessful) {
+          break;
         }
       }
     }
-
-    LibSerial::cmdStack.clear();
+    LibSerial::Packet::clear();
     LibState::set(STATE::REPORTING_RESULT);
   }
 };
 //==============================================================================
-// TODO: REWRITE
-namespace LibSerial {
-  class CommandBuffer {
-  private:
-    char buffer[24] = {0};
-    short bufferCursor = 0;
-  public:
-    bool commandBeginFound = false;
-
-    void add(char character) {
-      buffer[bufferCursor] = character;
-      bufferCursor++;
-      if(bufferCursor > 23) {Serial.println(F("SERIAL BUFFER OVERFLOW"));}
-    }
-    void clear() {
-      bufferCursor = 0;
-    }
-    bool isCurrent(char character) {
-      return character == buffer[bufferCursor-1];
-    }
-    char get(short index) {
-      if(index > bufferCursor) {
-        return '0';  
-      } else {
-        return buffer[index];
-      }
-    }
-    short length() {
-      return bufferCursor;
-    }
-    char* getBuffer() {
-      return buffer;
-    }
-  } commandBuffer;
-
-  void parseCommand () {
-    if (commandBuffer.get(1) == 'S') {
-      cmdStack.push(COMMAND::START);
-      LibState::set(STATE::READING_RESPONSE);
-    } else if(commandBuffer.get(1) == 'W') {
-      // Block number fetch
-      char blockNum[2];
-      strncpy(blockNum, commandBuffer.getBuffer()+2, 2);
-
-      // Block data fetch
-      char blockData[16];
-      strncpy(blockData, commandBuffer.getBuffer()+4, 16);
-
-      cmdStack.push(COMMAND::BLOCK_WRITE, strtol(blockNum, nullptr, 10), blockData);
-
-      char printBlockData[17];
-      printBlockData[16] = '\0';
-      strncpy(printBlockData, commandBuffer.getBuffer()+4, 16);
-
-      char printBlockNum[3];
-      printBlockNum[2] = '\0';
-      strncpy(printBlockNum, commandBuffer.getBuffer()+2, 2);
-      LibState::set(STATE::READING_RESPONSE);
-    } else if(commandBuffer.get(1) == 'F') {
-      LibError::set(NOTIFY_ERRORS::NOT_ENOUGH_MONEY);
-      LibState::set(STATE::SHOWING_ERROR);
-    } else if(commandBuffer.get(1) == 'E') {
-      cmdStack.push(COMMAND::END);
-      LibState::set(STATE::WRITING_CARD);
-    }
-    
-    if(commandBuffer.length() > 0) {
-      Serial.println();
-      for(int i=0; i < commandBuffer.length(); i++) { Serial.print(commandBuffer.get(i)); }
-      Serial.println();
-    }
-    
-    cmdStartFound = false;
-    cmdEndFound = false;
-    commandBuffer.clear();
-  }
-
-  void readSerialBuffer() {
-    commandBuffer.add(Serial.read());
-    if(commandBuffer.isCurrent(cmdStart)) {
-      cmdStartFound = true;
-    } else if(commandBuffer.isCurrent(cmdEnd)) {
-      cmdEndFound = true;
-      LibState::set(STATE::PARSING_COMMAND);
-    } else if(!cmdStartFound) {
-      commandBuffer.clear();
-    }
-  }
-
-  void listenSerial() {
-    /*if(LibState::check(STATE::WAITING_RESPONSE)) {
-      if(millis() - LibCom::dataSendTime > LibCom::responseTimelimit) {
-        LibState::set(STATE::WAITING_CARD);
-      }
-    }*/
-    while(Serial.available() > 0) {
-      readSerialBuffer();
-    }
-  }
-
-  void reportWriting() {
+namespace LibCom {
+  void reportWriteStatus() {
     if(LibNFC::isWriteSuccessful) {
       LibNotify::notifySuccess();
-      LibDebug::trace(F("[STATUS|OK]"));
+      LibDebug::trace(F("[WRITE STATUS|OK]"));
     } else {
       LibNotify::notifyError();
-      LibDebug::trace(F("[STATUS|FAIL]"));
+      LibDebug::trace(F("[WRTIE STATUS|FAIL]"));
     }
     LibState::set(STATE::WAITING_CARD);
   }
-};
+}
 //==============================================================================
-
-
-// TODO: Remove irrelevant msgs and add more informative
-#define MSG_SERIAL_CONNECTED  F("[OK|SERIAL CONNECTED]")
-#define MSG_NFC_CONNECTED     F("[OK|NFC CONNECTED]")
-#define MSG_WAITING_CARD      F("[OK|WAITING CARD]")
-#define MSG_BOARD_NOT_FOUND   F("[ERROR|BOARD NOT FOUND]")
 
 // TODO: Notify init with lights
 void setup() {
@@ -551,20 +515,24 @@ void setup() {
   // Serial init
   Serial.begin(115200);
   while (!Serial);
-  LibDebug::trace(MSG_SERIAL_CONNECTED); // DEBUG: serial start
 
   // Setting NFC lib
   nfc.begin();
-  if (!nfc.getFirmwareVersion()) { // Checking board
-    LibDebug::trace(MSG_BOARD_NOT_FOUND); // DEBUG: board not found
-    while (1); // Can't continue without board
-  }
-  nfc.SAMConfig(); // Configuring nfc reader
+  // Checking board
+  if (!nfc.getFirmwareVersion()) {
+    LibDebug::trace(F("[ERROR|NFC NOT CONNECTED]"));
 
-  LibDebug::trace(MSG_NFC_CONNECTED); // DEBUG: board found
-  
-  LibDebug::trace(MSG_WAITING_CARD); // DEBUG: listening serial port
-  LibState::set(STATE::WAITING_CARD); // Setting waiting card state
+    // Can't continue without board
+    while (1);
+  }
+
+  // Configuring nfc reader
+  nfc.SAMConfig();
+
+  // Setting waiting card state
+  LibState::set(STATE::WAITING_CARD);
+
+  LibDebug::trace(F("[INIT SUCCESSFUL]"));
   
   ////LibTime::setInterval(&LibNotify::notifySuccess, 2000);
   ////LibTime::setInterval(&LibNotify::notifyError, 2000);
@@ -579,10 +547,9 @@ void loop() {
   case STATE::SENDING_DATA:     LibNFC::sendData(); break;
   case STATE::WAITING_RESPONSE:
   case STATE::READING_RESPONSE: LibSerial::listenSerial(); break;
-  case STATE::PARSING_COMMAND:  LibSerial::parseCommand(); break;
   case STATE::WRITING_CARD:     LibNFC::writeDataOnCard(); break;
   case STATE::SHOWING_ERROR:    LibNotify::notifyError(); break;
-  case STATE::REPORTING_RESULT: LibSerial::reportWriting(); break;
+  case STATE::REPORTING_RESULT: LibCom::reportWriteStatus(); break;
   default: break;
   }
 }
