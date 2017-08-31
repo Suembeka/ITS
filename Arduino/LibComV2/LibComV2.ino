@@ -369,6 +369,7 @@ namespace LibNFC {
   bool writeToCard(int block, char _data[16]) {
     // If auth fails
     if(!authBlock(block)) {
+        LibDebug::trace(F("---AUTH FAIL ON WRITE---"));
         return false;
     } else {
       uint8_t data[16];
@@ -382,6 +383,7 @@ namespace LibNFC {
 
   // TODO: REWRITE
   void writeDataOnCard () {
+    isWriteSuccessful = false;
 
     Command *cmd = LibSerial::cmdStack.pop();
     if(cmd->type != COMMAND::START) {
@@ -486,13 +488,13 @@ namespace LibSerial {
       cmdStack.push(COMMAND::END);
       LibState::set(STATE::WRITING_CARD);
     }
-    /*
+    
     if(commandBuffer.length() > 0) {
       Serial.println();
       for(int i=0; i < commandBuffer.length(); i++) { Serial.print(commandBuffer.get(i)); }
       Serial.println();
     }
-    */
+    
     cmdStartFound = false;
     cmdEndFound = false;
     commandBuffer.clear();
