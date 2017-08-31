@@ -54,11 +54,11 @@ const SerialParser =  Serial.pipe(new SerialPort.parsers.Readline());
 //    parser: SerialPort.parsers.Readline
 //});
 
+// TODO: add card scheme
 class Arduino extends EventEmitter {
     write(card) {
-		function getHex(decimal) {
+		function getHex(decimal, sizeInBytes) {
             var binStr = decimal.toString(2);
-            var sizeInBytes = Math.ceil(Math.log2(decimal) / 8);
 
             binStr = binStr.padStart(sizeInBytes * 8, '0');
 
@@ -71,59 +71,53 @@ class Arduino extends EventEmitter {
 
 		this.writeToCard(
             Parser.encode({
-                '04': getHex(card.cardType)
-                        .concat(getHex(card.expireTime))
+                '04': getHex(card.cardType, 2)
+                        .concat(getHex(card.expireTime, 6))
                         .join('').padEnd(32, '0'),
-                '05': getHex(card.lastTransportID)
-                        .concat(getHex(card.balance))
-                        .concat(getHex(card.lastPaytime))
+                '05': getHex(card.lastTransportID, 2)
+                        .concat(getHex(card.balance, 3))
+                        .concat(getHex(card.lastPaytime, 6))
                         .join('').padEnd(32, '0')
             })
         );
     }
 
     writeToCard(data) {
-        console.log(data);
+        //console.log(data);
         Serial.write(data, function() {
             Logger.log({file: __filename, msg: 'Write to Card'});
         });
     }
 
     processCard(cardBlocks) {
+        //console.log(cardBlocks);
+
         for(var block in cardBlocks) {
             cardBlocks[block] = cardBlocks[block].split(/(.{2})/).filter(function(el){ return el.length > 0; });
         }
 
         function getInt(bytes) {
-			bytes.map(function(hexByte) {
-				return parseInt(hexByte, 16).toString(2);
-			});
+            //console.log(bytes);
+			bytes = bytes.map(function(hexByte) {
+				return parseInt(hexByte, 16).toString(2).padStart(8, '0');
+            });
 			return parseInt(bytes.join(''), 2);
         }
 
-        var card = Object.assign({}, CardTemplate);
-        card.cardID = getInt(cardBlocks['00'].slice(0, 4));
-        card.cardType = getInt(cardBlocks['04'].slice(0, 1));
-        card.expireTime = getInt(cardBlocks['04'].slice(1, 1 + 6));
-        card.lastTransportID = getInt(cardBlocks['05'].slice(0, 2));
-        card.balance = getInt(cardBlocks['05'].slice(2, 2 + 3));
-        card.lastPaytime = getInt(cardBlocks['05'].slice(5, 5 + 6));
+        var card = {
+            cardID: getInt(cardBlocks['00'].slice(0, 4)),
+            cardType: getInt(cardBlocks['04'].slice(0, 1)),
+            expireTime: getInt(cardBlocks['04'].slice(1, 1 + 6)),
+            lastTransportID: getInt(cardBlocks['05'].slice(0, 2)),
+            balance: getInt(cardBlocks['05'].slice(2, 2 + 3)),
+            lastPaytime: getInt(cardBlocks['05'].slice(5, 5 + 6))
+        }
 
-        this.emit('payment', card);
+        this.emit('cardFound', card);
     }
 };
 
 var arduino = new Arduino();
-
-var CardTemplate = {
-    cardID: 0,
-    cardType: 0,
-    balance: 0,
-    expireTime: 0,
-    lastTransportID: 0,
-    lastPaytime: 0
-};
-
 
 Parser.on('cardFound', function(cardData) {
     arduino.processCard(cardData);

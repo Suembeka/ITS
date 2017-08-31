@@ -13,10 +13,10 @@ class Parser extends EventEmitter {
     // '\[STATUS|FAIL\]'
 
     parse(data) {
+        //console.log('PARSER: ', data);
+
         var block;
         data = data.replace(/[\r\n]/g, '');
-        var isTrue = /^\[([0-9]{2})(.{32})]$/.test(data);
-        console.log(data, isTrue);
 
         if(/\[([0-9]{2})(.{32})]/.test(data)) {
             block = data.match(/^\[([0-9]{2})(.{32})]$/);
@@ -32,11 +32,12 @@ class Parser extends EventEmitter {
     }
 	
 	encode(blocks) {
-        var msg = '[S]\n';
+        var newLine = '\r\n';
+        var msg = '[S]' + newLine;
         for(var blockNum in blocks) {
-            msg += '[' + blockNum + blocks[blockNum] + ']\n';
+            msg += '[W' + blockNum + blocks[blockNum] + ']' + newLine;
         }
-        msg += '[E]\n';
+        msg += '[E]' + newLine;
         return msg;
 	}
 };

@@ -30,16 +30,19 @@ class App {
 	}
 	
 	initArduino() {
-		Arduino.on('payment', (card) => this.processPayment(card));
+		Arduino.on('cardFound', (card) => this.processPayment(card));
 	}
 	
 	processPayment(card) {
+		console.log(card);
+		if(Date.now() - card.lastPaytime < 5000) { console.log('Reject'); return; }
+
 		card = {
 			cardType: 1,
 			balance: 5000,
 			expireTime: 1506077646044,
 			lastTransportID: 123,
-			lastPaytime: 1504077646044
+			lastPaytime: Date.now()
 		};
 		Arduino.write(card);
 	}
@@ -50,3 +53,8 @@ app.initDB();
 app.initState();
 app.initGPS();
 app.initArduino();
+
+process.on('unhandledRejection', (reason, p) => {
+	console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+	// application specific logging, throwing an error, or other logic here
+  });
