@@ -48,6 +48,10 @@ const Serial = new SerialPort('COM5', {
     baudRate: 115200
 });
 
+/*const Serial = new SerialPort('/dev/ttyACM0', {
+    baudRate: 115200
+});*/
+
 const SerialParser =  Serial.pipe(new SerialPort.parsers.Readline());
 
 //var Serial2 = new SerialPort("COM5", {
