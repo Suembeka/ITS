@@ -12,7 +12,7 @@ class Parser extends EventEmitter {
     // '\[STATUS|OK\]',
     // '\[STATUS|FAIL\]'
 
-    parse(data) {
+    parse(data, arduinoID) {
         //console.log('PARSER: ', data);
 
         var block;
@@ -22,15 +22,15 @@ class Parser extends EventEmitter {
             block = data.match(/^\[([0-9]{2})(.{32})]$/);
             cardBlocks[block[1]] = block[2];
         } else if(/\[E\]/.test(data)) {
-            this.emit('cardFound', cardBlocks);
+            this.emit('cardFound', cardBlocks, arduinoID);
             cardBlocks = {};
         } else if(/\[STATUS\|OK\]/.test(data)) {
-            this.emit('writeStatus', true);
+            this.emit('writeStatus', true, arduinoID);
         } else if(/\[STATUS\|FAIL\]/.test(data)) {
-            this.emit('writeStatus', false);
+            this.emit('writeStatus', false, arduinoID);
         }
     }
-	
+
 	encode(blocks) {
         var newLine = '\r\n';
         var msg = '[S]' + newLine;

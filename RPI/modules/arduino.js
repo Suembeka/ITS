@@ -57,7 +57,7 @@ const SerialParser =  Serial.pipe(new SerialPort.parsers.Readline());
 
 // TODO: add card scheme
 class Arduino extends EventEmitter {
-    write(card) {
+    write(card, arduinoID) {
 		function getHex(decimal, sizeInBytes) {
             var binStr = decimal.toString(2);
 
@@ -70,8 +70,7 @@ class Arduino extends EventEmitter {
                             });
         }
 
-		this.writeToCard(
-            Parser.encode({
+        var encodedData = Parser.encode({
                 '04': getHex(card.cardType, 2)
                         .concat(getHex(card.expireTime, 6))
                         .join('').padEnd(32, '0'),
@@ -79,18 +78,16 @@ class Arduino extends EventEmitter {
                         .concat(getHex(card.balance, 3))
                         .concat(getHex(card.lastPaytime, 6))
                         .join('').padEnd(32, '0')
-            })
-        );
+        })
+
+        if(arduinoID == 1) {
+            Serial.write(encodedData, function() {
+                Logger.log({file: __filename, msg: 'Write to Card'});
+            });
+        } else {}
     }
 
-    writeToCard(data) {
-        //console.log(data);
-        Serial.write(data, function() {
-            Logger.log({file: __filename, msg: 'Write to Card'});
-        });
-    }
-
-    processCard(cardBlocks) {
+    processCard(cardBlocks, arduinoID) {
         //console.log(cardBlocks);
 
         for(var block in cardBlocks) {
@@ -114,18 +111,18 @@ class Arduino extends EventEmitter {
             lastPaytime: getInt(cardBlocks['05'].slice(5, 5 + 6))
         }
 
-        this.emit('cardFound', card);
+        this.emit('cardFound', card, arduinoID);
     }
 };
 
 var arduino = new Arduino();
 
-Parser.on('cardFound', function(cardData) {
-    arduino.processCard(cardData);
+Parser.on('cardFound', function(cardData, arduinoID) {
+    arduino.processCard(cardData, arduinoID);
 });
 
-Parser.on('writeStatus', function(status) {
-    arduino.emit('writeStatus', status);
+Parser.on('writeStatus', function(status, arduinoID) {
+    arduino.emit('writeStatus', status, arduinoID);
 });
 
 
@@ -134,7 +131,7 @@ SerialParser.on('open', function () {
 }).on('error', function (err) {
     Logger.log({file: __filename, msg: 'Serial Port Open Fail', err: err});
 }).on('data', function(data) {
-    Parser.parse(data);
+    Parser.parse(data, 1); // 1 = arduino id
 });
 
 /*
