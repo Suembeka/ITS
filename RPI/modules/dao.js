@@ -13,7 +13,7 @@ var DAO = {
         port: '/var/run/mysqld/mysqld.sock',
         user: 'rpibus',
         password: '12345678qwerty',
-        database: 'bus_system'
+        database: 'its_rpi'
     },
 
     connect: function () {
@@ -24,7 +24,6 @@ var DAO = {
                 DAO.isInit = false;
             } else {
                 DAO.isInit = true;
-
             }
         });
     },
@@ -45,6 +44,8 @@ var DAO = {
         DAO.db = DAO.connection;
         DAO.getTransportID();
         DAO.getPaymentAmount();
+        DAO.GPS.allStations();
+        console.log("Init() successful");
     },
 
     state: {},
@@ -64,7 +65,7 @@ var DAO = {
             }
         });
     },
-    
+  
     GPS: {
         curStation: 0,
         curStationOrder: 0,

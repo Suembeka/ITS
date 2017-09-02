@@ -2,7 +2,7 @@
 
 const DAO = require('./modules/dao.js');
 const Logger = require('./modules/logger.js');
-//const GPS = require('./modules/gps.js');
+const GPS = require('./modules/gps.js');
 const Arduino = require('./modules/arduino.js');
 
 class App {
@@ -15,7 +15,7 @@ class App {
 	setPaymentAmount(val){ paymentAmount = val; }
 
 	initDB() {
-		// DAO.connect();
+		DAO.connect();
 	}
 
 	initState() {
@@ -26,7 +26,9 @@ class App {
 	}
 
 	initGPS() {
-		// GPS.init(this.state);
+    setInterval(function () {
+        GPS.processGPS(DAO);
+    }, 1000);
 	}
 	
 	initArduino() {
@@ -56,5 +58,4 @@ app.initArduino();
 
 process.on('unhandledRejection', (reason, p) => {
 	console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
-	// application specific logging, throwing an error, or other logic here
-  });
+});
