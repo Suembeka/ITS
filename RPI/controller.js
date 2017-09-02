@@ -9,7 +9,7 @@ class App {
 	getCurrentStation(){ return this.currentStation; }
 	getTransportID(){ return this.transportID; }
 	getPaymentAmount(){ return this.paymentAmount; }
-	
+
 	setCurrentStation(val){ currentStation = val; }
 	setTransportID(val){ transportID = val; }
 	setPaymentAmount(val){ paymentAmount = val; }
@@ -30,11 +30,12 @@ class App {
         GPS.processGPS(DAO);
     }, 1000);
 	}
-	
+
 	initArduino() {
 		Arduino.on('cardFound', (card) => this.processPayment(card));
+		Arduino.on('writeStatus', (status) => this.acceptTranscation(status));
 	}
-	
+
 	processPayment(card) {
 		console.log(card);
 		if(Date.now() - card.lastPaytime < 5000) { console.log('Reject'); return; }
@@ -47,6 +48,10 @@ class App {
 			lastPaytime: Date.now()
 		};
 		Arduino.write(card);
+	}
+
+	acceptTranscation(paymentStatus) {
+		//paymentStatus = true or false
 	}
 };
 

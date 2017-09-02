@@ -1,5 +1,6 @@
 'use strict';
 
+// Polyfills
 if (!String.prototype.padStart) {
     String.prototype.padStart = function padStart(targetLength,padString) {
         targetLength = targetLength>>0; //floor if number or convert non-number to 0;
@@ -98,10 +99,10 @@ class Arduino extends EventEmitter {
 
         function getInt(bytes) {
             //console.log(bytes);
-			bytes = bytes.map(function(hexByte) {
-				return parseInt(hexByte, 16).toString(2).padStart(8, '0');
+            bytes = bytes.map(function(hexByte) {
+                return parseInt(hexByte, 16).toString(2).padStart(8, '0');
             });
-			return parseInt(bytes.join(''), 2);
+            return parseInt(bytes.join(''), 2);
         }
 
         var card = {
