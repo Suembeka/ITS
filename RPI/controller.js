@@ -10,7 +10,7 @@ var usb_controller_file = require('./modules/usb_controller.js');
 var GPSInc = require('gps');
 
 dao_file.init();
-gps_file.calculateDistances(GPSInc, dao_file);
+/*gps_file.calculateDistances(GPSInc, dao_file);*/
 
 var SerialPort = require('serialport');
 var Readline = SerialPort.parsers.Readline;

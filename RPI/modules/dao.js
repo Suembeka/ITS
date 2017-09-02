@@ -43,7 +43,7 @@ var DAO = {
 
     // TODO: move to controller
     db: {},
-    init: function (GPSInc) {
+    init: function () {
         "use strict";
         DAO.connect();
         DAO.db = DAO.connection;
@@ -78,10 +78,10 @@ var DAO = {
         curStationOrder: 0,
         circlesCount: 0,
         stationsLatLng: null,
-        distances: [],
+        checkedStations: [],
 
         allStations: function () {
-            DAO.connection.query('SELECT latlng, station_by_order FROM stations, route_stations WHERE stations.id = route_stations.station_id;', function (err, result) {
+            DAO.connection.query('SELECT stations.id, latlng, station_by_order FROM stations, routes_stations WHERE stations.id = routes_stations.station_id;', function (err, result) {
                 if (!DAO.logError(err)) {
                     DAO.GPS.stationsLatLng = result;
                 }
@@ -91,7 +91,7 @@ var DAO = {
         setCurrentStation: function () {
             DAO.connection.query('UPDATE misc SET current_station_id = ' + DAO.GPS.curStation + ';', function (err) {
                 if (!DAO.logError(err)) {
-                    Logger.writeLog('Current station has changed...');
+                    /*Logger.writeLog('Current station has changed...');*/
                 }
             });
         },
@@ -102,6 +102,16 @@ var DAO = {
                     Logger.writeLog('Circles have increased...');
                 }
             });
+        },
+
+        addStationsSequence: function () {
+            for (var i = 0; i < DAO.GPS.checkedStations.length; i++) {
+                DAO.connection.query('INSERT INTO `st_history` (circle_id, serial_number, station_by_order) VALUES (' + DAO.GPS.circlesCount + ', ' + i + ', ' + DAO.GPS.checkedStations[i] + ');', function (err) {
+                    if (!DAO.logError(err)) {
+                        Logger.writeLog('addStationsSequence have done...');
+                    }
+                });
+            }
         }
     }
 };
