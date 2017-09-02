@@ -1,3 +1,5 @@
+'use strict';
+
 var MySQL = require('mysql');
 var Logger = require('./logger');
 
@@ -15,7 +17,6 @@ var DAO = {
     },
 
     connect: function () {
-        "use strict";
         DAO.connection = MySQL.createConnection(DAO.connectionOptions);
 
         DAO.connection.connect(function (err) {
@@ -28,13 +29,8 @@ var DAO = {
     },
 
     logError: function (err) {
-        "use strict";
         if (err) {
-            /*Logger.log({
-                file: __filename,
-                dir: __dirname,
-                error: err
-            });*/
+            Logger.log({file: __filename, err: err});
             return true;
         } else {
             return false;
@@ -44,7 +40,6 @@ var DAO = {
     // TODO: move to controller
     db: {},
     init: function () {
-        "use strict";
         DAO.connect();
         DAO.db = DAO.connection;
         DAO.getTransportID();
@@ -54,9 +49,8 @@ var DAO = {
     },
 
     state: {},
-
+    
     getTransportID: function () {
-        "use strict";
         DAO.connection.query('SELECT transport_id FROM transport', function (err, result) {
             if (!DAO.logError(err)) {
                 DAO.state.transportID = result.transportID;
@@ -65,14 +59,13 @@ var DAO = {
     },
 
     getPaymentAmount: function () {
-        "use strict";
         DAO.connection.query('SELECT payment_amount FROM misc', function (err, result) {
             if (!DAO.logError(err)) {
                 DAO.state.paymentAmount = result.paymentAmount;
             }
         });
     },
-
+  
     GPS: {
         curStation: 0,
         curStationOrder: 0,

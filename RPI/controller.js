@@ -1,44 +1,61 @@
-// Files
-var logger_file = require('./modules/logger.js');
-var gps_file = require('./modules/gps.js');
-var dao_file = require('./modules/dao.js');
-var net_controller_file = require('./modules/net_controller.js');
-var notifier_file = require('./modules/notifier.js');
-var parser_file = require('./modules/parser.js');
-var usb_controller_file = require('./modules/usb_controller.js');
+'use strict';
 
-var GPSInc = require('gps');
+const DAO = require('./modules/dao.js');
+const Logger = require('./modules/logger.js');
+const GPS = require('./modules/gps.js');
+const Arduino = require('./modules/arduino.js');
 
-dao_file.init();
-/*gps_file.calculateDistances(GPSInc, dao_file);*/
+class App {
+	getCurrentStation(){ return this.currentStation; }
+	getTransportID(){ return this.transportID; }
+	getPaymentAmount(){ return this.paymentAmount; }
+	
+	setCurrentStation(val){ currentStation = val; }
+	setTransportID(val){ transportID = val; }
+	setPaymentAmount(val){ paymentAmount = val; }
 
-var SerialPort = require('serialport');
-var Readline = SerialPort.parsers.Readline;
-var parser = new Readline();
+	initDB() {
+		DAO.connect();
+	}
 
-/*parser.on('open', function(){
-	console.log('onOpen');
-});*/
+	initState() {
+		// const appInitData = DAO.getAppInitData();
+		// setCurrentStation(appInitData.currentStation);
+		// setTransportID(appInitData.transportID);
+		// setPaymentAmount(appInitData.paymentAmount);
+	}
 
+	initGPS() {
+    setInterval(function () {
+        GPS.processGPS(DAO);
+    }, 1000);
+	}
+	
+	initArduino() {
+		Arduino.on('cardFound', (card) => this.processPayment(card));
+	}
+	
+	processPayment(card) {
+		console.log(card);
+		if(Date.now() - card.lastPaytime < 5000) { console.log('Reject'); return; }
 
-var gps = new GPS();
+		card = {
+			cardType: 1,
+			balance: 5000,
+			expireTime: 1506077646044,
+			lastTransportID: 123,
+			lastPaytime: Date.now()
+		};
+		Arduino.write(card);
+	}
+};
 
-var portGPS = new SerialPort('/dev/ttyS0');
-portGPS.pipe(parser);
+const app = new App();
+app.initDB();
+app.initState();
+app.initGPS();
+app.initArduino();
 
-parser.on('data', function (data) {
-    "use strict";
-    gps.update(data);
-}).on('error', function (err) {
-    "use strict";
-    logger_file.writeLog(err);
+process.on('unhandledRejection', (reason, p) => {
+	console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
 });
-/*gps.on('data', function () {
-	console.log('parsed');
-});*/
-
-
-setInterval(function () {
-    "use strict";
-    gps_file.processGPS(GPSInc, gps.state, dao_file);
-}, 1000);
