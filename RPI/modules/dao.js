@@ -48,10 +48,7 @@ var DAO = {
     },
 
     state: {},
-    curStation: 1,
-    curStationOrder: 1,
-    circlesCount: 0,
-
+    
     getTransportID: function () {
         DAO.connection.query('SELECT transport_id FROM transport', function (err, result) {
             if (!DAO.logError(err)) {
@@ -66,6 +63,48 @@ var DAO = {
                 DAO.state.paymentAmount = result.paymentAmount;
             }
         });
+    },
+    
+    GPS: {
+        curStation: 0,
+        curStationOrder: 0,
+        circlesCount: 0,
+        stationsLatLng: null,
+        checkedStations: [],
+
+        allStations: function () {
+            DAO.connection.query('SELECT stations.id, latlng, station_by_order FROM stations, routes_stations WHERE stations.id = routes_stations.station_id;', function (err, result) {
+                if (!DAO.logError(err)) {
+                    DAO.GPS.stationsLatLng = result;
+                }
+            });
+        },
+
+        setCurrentStation: function () {
+            DAO.connection.query('UPDATE misc SET current_station_id = ' + DAO.GPS.curStation + ';', function (err) {
+                if (!DAO.logError(err)) {
+                    /*Logger.writeLog('Current station has changed...');*/
+                }
+            });
+        },
+
+        increaseCircle: function () {
+            DAO.connection.query('UPDATE misc SET circles_count = ' + DAO.GPS.circlesCount + ';', function (err) {
+                if (!DAO.logError(err)) {
+                    Logger.writeLog('Circles have increased...');
+                }
+            });
+        },
+
+        addStationsSequence: function () {
+            for (var i = 0; i < DAO.GPS.checkedStations.length; i++) {
+                DAO.connection.query('INSERT INTO `st_history` (circle_id, serial_number, station_by_order) VALUES (' + DAO.GPS.circlesCount + ', ' + i + ', ' + DAO.GPS.checkedStations[i] + ');', function (err) {
+                    if (!DAO.logError(err)) {
+                        Logger.writeLog('addStationsSequence have done...');
+                    }
+                });
+            }
+        }
     }
 };
 
