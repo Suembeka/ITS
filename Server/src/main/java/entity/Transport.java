@@ -44,7 +44,6 @@ public class Transport {
     public void setRoutesHistory( List<RouteAssociation> routes){ this.routes = routes; }
     public void setType( int type){ this.type = type; }
     public void setDriversHistory( List<DriverAssociation> drivers){ this.drivers = drivers; }
-    
     public Driver getDriver(){ return curentDriver; }
     public Route getRoute(){ return curentRoute; }
     
