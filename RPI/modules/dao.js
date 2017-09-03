@@ -56,7 +56,7 @@ var DAO = {
     getTransportID: function () {
         DAO.connection.query('SELECT id FROM transports', function (err, result) {
             if (!DAO.logError(err)) {
-                DAO.state.transportID = result.id;
+                DAO.state.transportID = result[0].id;
             }
         });
     },
@@ -64,7 +64,7 @@ var DAO = {
     getPaymentAmount: function () {
         DAO.connection.query('SELECT payment_amount FROM routes', function (err, result) {
             if (!DAO.logError(err)) {
-                DAO.state.paymentAmount = result.payment_amount;
+                DAO.state.paymentAmount = result[0].payment_amount;
             }
         });
     },
