@@ -68,10 +68,16 @@ var DAO = {
     state: {},
 
     getTransportID: function () {
-        DAO.connection.query('SELECT id FROM transports', function (err, result) {
-            if (!DAO.logError(err)) {
-                DAO.state.transportID = result[0].id;
-            }
+        return Promise.resolve(2); // REMOVE
+        return new Promise((resolve, reject) => {
+            DAO.connection.query('SELECT id FROM transports', function (err, result) {
+                if (!DAO.logError(err)) {
+                    DAO.state.transportID = result[0].id;
+                    resolve(DAO.state.transportID);
+                } else {
+                    reject();
+                }
+            });
         });
     },
 
@@ -99,6 +105,35 @@ var DAO = {
                     console.log("Transaction's inserted!");
                 }
             });
+    },
+
+    getDataForSync: function() {
+        return Promise.resolve([{id: 0}, {id: 1}, {id: 2}]); // REMOVE
+        return new Promise((resolve, reject) => {
+            DAO.connection.query('SELECT * FROM transactions ORDER BY id', function (err, result) {
+                if (!DAO.logError(err)) {
+                    resolve(result);
+                } else {
+                    reject();
+                }
+            });
+        });
+    },
+
+    confirmTransactions: function(transactions) {
+        return Promise.resolve(); // REMOVE
+
+        let lastSyncID = transactions.sort((a, b) => a - b)[0].id;
+
+        return new Promise((resolve, reject) => {
+            DAO.connection.query("UPDATE misc SET `last_sync_id` = '" + lastSyncID + "'", function(err, result) {
+                if (!DAO.logError(err)) {
+                    resolve();
+                } else {
+                    reject();
+                }
+            });
+        });
     },
 
     GPS: {

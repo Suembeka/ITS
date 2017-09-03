@@ -4,13 +4,13 @@ const Request = require('request');
 
 class Net {
     constructor() {
-        this.apiURL = '';
+        this.apiURL = 'http://its.loc/';
     }
 
     sendRequest(jsonPackage) {
         return new Promise((resolve, reject) => {
-            request({
-                method: 'POST'
+            Request({
+                method: 'POST',
                 uri: this.apiURL,
                 form: jsonPackage,
                 timeout: 5000,
@@ -18,9 +18,16 @@ class Net {
                 json: true
             }, (err, response, body) => {
                 if(err) { reject(); } // Error message
-                resolve(body);
+                if (response.statusCode == 200) {
+                    resolve(body);
+                }
             });
         });
+    }
+
+    // TODO: check internet connection procedure
+    checkConnection() {
+        return true;
     }
 };
 

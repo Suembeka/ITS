@@ -2,20 +2,22 @@
 
 const Request = require('request');
 const DAO = require('./modules/dao.js');
-const Net = require('./modules/net_module.js');
+const Net = require('./modules/net.js');
 const Logger = require('./modules/logger.js');
 
 // TODO: Add package scheme
 class Sync {
     constructor() {
-        this.state = {};
+        this.state = {
+            transportID: null
+        };
     }
 
     init() {
-        new Promise().resolve()
-            .then(initDB)
-            .then(initState)
-            .then(initSyncTimer);
+        Promise.resolve()
+            .then(() => this.initDB())
+            .then(() => this.initState())
+            .then(() => this.initSyncTimer());
     }
 
     initDB() {
@@ -30,14 +32,15 @@ class Sync {
     }
 
     initSyncTimer() {
-        this.timer = setTimeout(syncNow, 60 * 1000);
+        //this.timer = setTimeout(syncNow, 60 * 1000);
+        this.syncNow();
     }
 
     syncNow() {
         if(!Net.checkConnection()) { return; }
         var transportID = this.transportID;
 
-        selectDataForSync()
+        this.selectDataForSync()
             .then(() => {
                 return Net.sendRequest({
                     'type': 'start_sync',
@@ -46,50 +49,74 @@ class Sync {
             })
             .then((response) => {
                 if(response.type == 'accept_sync') {
-                    this.state.lastSyncID = response.last_transaction_id;
+                    this.state.lastSyncID = response.data.last_transaction_id;
                     this.state.transactions = this.state.transactions
                         .filter((tr) => tr.id > this.state.lastSyncID);
 
-                    sendAllData();
+                    this.sendAllData();
+                }
+            });
+    }
+
+    selectDataForSync() {
+        return DAO.getDataForSync()
+            .then((data) => {
+                if(data.length == 0) {
+                    return Promise.reject();
+                } else {
+                    this.state.transactions = data;
+                    return Promise.resolve();
                 }
             });
     }
 
     sendAllData() {
-        const packageSize = 10;
-        let package = transactions.slice((packageSize * (part - 1)), (packageSize * part));;
-        const partsAmount = Math.ceil(transactions.length / packageSize);
+        const packetSize = 10;
+        const partsAmount = Math.ceil(this.state.transactions.length / packetSize);
         const tries = 5;
 
         let sendPromise = Promise.resolve();
         for(let part = 1; part <= partsAmount; part++) {
-            sendPromise = sendPromise.then(() => {
-                return sendDataPart(package, tries);
-            });
+            let packet = this.state.transactions.slice((packetSize * (part - 1)), (packetSize * part));
+            sendPromise = sendPromise
+                .then(() => {
+                    console.log('sendData');
+                    return this.sendData(packet, tries);
+                })
+                .catch(() => {
+                    console.log('send sequence failed');
+                });
         }
 
         // After all sends
         // return sendPromise;
     }
 
-    sendData(package, tries) {
-        return sendPackage(package)
+    sendData(packet, tries) {
+        //console.log('sendData try:', tries);
+        if(tries < 0) {
+            return Promise.reject();
+        }
+        return this.sendPacket(packet)
             .then(
             // Successful
             () => {
-                return DAO.confirmTransactions(package);
+                //console.log('sendPacket successful');
+                return DAO.confirmTransactions(packet);
             },
             // Not successful
             () => {
+                //console.log('sendPacket not successful');
                 return new Promise((resolve, reject) => {
                     setTimeout(() => {
-                        resolve(sendData(package, tries - 1));
-                    }, 5000); // Pause between requests if fails
+                        resolve(this.sendData(packet, tries - 1));
+                    }, 1000); // Pause between requests if fails
                 });
             });
     }
 
-    sendPackage(transactions, try = 0) {
+    sendPacket(transactions) {
+        //return Promise.reject(); // REMOVE
         return Net.sendRequest({
             'type': 'send_data',
             'data': {
@@ -97,6 +124,7 @@ class Sync {
             }
         })
         .then((response) => {
+            //console.log(response);
             if(response.type == 'sync_status') {
                 if(response.data.status == 200) {
                     return Promise.resolve();
@@ -106,18 +134,6 @@ class Sync {
                 }
             }
         });
-    }
-
-    selectDataForSync() {
-        return DAO.getDataForSync()
-            .then((data) = > {
-                if(data.length == 0) {
-                    return Promise.reject();
-                } else {
-                    this.state.transactions = data;
-                    return Promise.resolve();
-                }
-            });
     }
 }
 
