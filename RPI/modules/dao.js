@@ -1,7 +1,20 @@
 'use strict';
 
+function twoDigits(d) {
+    if (0 <= d && d < 10) return "0" + d.toString();
+    if (-10 < d && d < 0) return "-0" + (-1 * d).toString();
+    return d.toString();
+}
+
+Date.prototype.toMysqlFormat = function () {
+    return this.getUTCFullYear() + "-" + twoDigits(1 + this.getUTCMonth()) + "-" + twoDigits(this.getUTCDate()) + " " + twoDigits(this.getUTCHours()) + ":" + twoDigits(this.getUTCMinutes()) + ":" + twoDigits(this.getUTCSeconds());
+};
+
 var MySQL = require('mysql');
 var Logger = require('./logger');
+const uuidv1 = require('uuid/v1');
+
+
 
 var DAO = {
     connection: null,
@@ -47,6 +60,7 @@ var DAO = {
         DAO.db = DAO.connection;
         DAO.getTransportID();
         DAO.getPaymentAmount();
+        DAO.getRouteID();
         DAO.GPS.allStations();
         console.log("Init() successful");
     },
@@ -67,6 +81,24 @@ var DAO = {
                 DAO.state.paymentAmount = result[0].payment_amount;
             }
         });
+    },
+
+    getRouteID: function () {
+        DAO.connection.query('SELECT id FROM routes', function (err, result) {
+            if (!DAO.logError(err)) {
+                DAO.state.routeID = result[0].id;
+            }
+        });
+    },
+
+    setTransaction: function (cardID, cardType) {
+        var timestamp = new Date().toMysqlFormat();
+        DAO.connection.query("INSERT INTO `transactions` (`transaction_id`, `time`, `transport_id`, `route_id`, `station_id`, `card_id`, `card_type`, `payment_amount`) VALUES ('" + uuidv1() + "', '" + timestamp + "', '" + DAO.state.transportID + "', '" + DAO.state.routeID + "', '" + DAO.GPS.curStation + "', '" + cardID + "', '" + cardType + "', '" + DAO.state.paymentAmount + "');",
+            function (err, result) {
+                if (!DAO.logError(err)) {
+                    console.log("Transaction's inserted!");
+                }
+            });
     },
 
     GPS: {
