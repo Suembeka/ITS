@@ -13,7 +13,8 @@ class App {
         return this.transportID;
     }
     getPaymentAmount() {
-        return this.paymentAmount;
+        //return this.paymentAmount;
+        return DAO.state.paymentAmount;
     }
 
     setCurrentStation(val) {
@@ -50,19 +51,22 @@ class App {
 
     processPayment(card, arduinoID) {
         console.log(card);
-        if (Date.now() - card.lastPaytime < 5000) {
+        //        if (Date.now() - card.lastPaytime < 5000) {
+        if (Date.now() - card.lastPaytime < 10000) {
             console.log('Reject');
             return;
         }
 
-        card = {
-            cardType: 1,
-            balance: 5000,
-            expireTime: 1506077646044,
-            lastTransportID: 123,
-            lastPaytime: Date.now()
-        };
-        Arduino.write(card, arduinoID);
+        if (card.balance < 1200) {
+            card = {
+                cardType: 1,
+                balance: 10000,
+                expireTime: 1506077646044,
+                lastTransportID: 123,
+                lastPaytime: Date.now()
+            };
+            Arduino.write(card, 1);
+        }
     }
 
     acceptTranscation(paymentStatus, arduinoID) {
