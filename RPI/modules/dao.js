@@ -30,7 +30,10 @@ var DAO = {
 
     logError: function (err) {
         if (err) {
-            Logger.log({file: __filename, err: err});
+            Logger.log({
+                file: __filename,
+                err: err
+            });
             return true;
         } else {
             return false;
@@ -49,23 +52,23 @@ var DAO = {
     },
 
     state: {},
-    
+
     getTransportID: function () {
-        DAO.connection.query('SELECT transport_id FROM transport', function (err, result) {
+        DAO.connection.query('SELECT id FROM transports', function (err, result) {
             if (!DAO.logError(err)) {
-                DAO.state.transportID = result.transportID;
+                DAO.state.transportID = result.id;
             }
         });
     },
 
     getPaymentAmount: function () {
-        DAO.connection.query('SELECT payment_amount FROM misc', function (err, result) {
+        DAO.connection.query('SELECT payment_amount FROM routes', function (err, result) {
             if (!DAO.logError(err)) {
-                DAO.state.paymentAmount = result.paymentAmount;
+                DAO.state.paymentAmount = result.payment_amount;
             }
         });
     },
-  
+
     GPS: {
         curStation: 0,
         curStationOrder: 0,
@@ -84,7 +87,7 @@ var DAO = {
         setCurrentStation: function () {
             DAO.connection.query('UPDATE misc SET current_station_id = ' + DAO.GPS.curStation + ';', function (err) {
                 if (!DAO.logError(err)) {
-                    /*Logger.writeLog('Current station has changed...');*/
+                    Logger.writeLog('Current station has changed...');
                 }
             });
         },
@@ -95,16 +98,6 @@ var DAO = {
                     Logger.writeLog('Circles have increased...');
                 }
             });
-        },
-
-        addStationsSequence: function () {
-            for (var i = 0; i < DAO.GPS.checkedStations.length; i++) {
-                DAO.connection.query('INSERT INTO `st_history` (circle_id, serial_number, station_by_order) VALUES (' + DAO.GPS.circlesCount + ', ' + i + ', ' + DAO.GPS.checkedStations[i] + ');', function (err) {
-                    if (!DAO.logError(err)) {
-                        Logger.writeLog('addStationsSequence have done...');
-                    }
-                });
-            }
         }
     }
 };
