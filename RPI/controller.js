@@ -51,21 +51,9 @@ class App {
 
     processPayment(card, arduinoID) {
         console.log(card);
-        //        if (Date.now() - card.lastPaytime < 5000) {
         if (Date.now() - card.lastPaytime < 10000) {
             console.log('Reject');
             return;
-        }
-
-        if (card.balance < 1200) {
-            card = {
-                cardType: 1,
-                balance: 10000,
-                expireTime: 1506077646044,
-                lastTransportID: 123,
-                lastPaytime: Date.now()
-            };
-            Arduino.write(card, 1);
         }
     }
 
