@@ -56,7 +56,7 @@ public class EntityDAOImpl implements EntityDAO {
         Object entity = null;
         try {
             session = HibernateUtil.getSessionFactory().openSession();
-            entity =  session.load(entitytClass.getName(), id);
+            entity =  session.get(entitytClass.getName(), id);
         } catch (Exception e) {
             log.error("Can not get by ID "+entity.getClass()+" object :(", e);
             throw e;

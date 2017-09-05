@@ -58,7 +58,7 @@ public class TransactionDAOImpl implements TransactionDAO {
         Transaction entity = null;
         try {
             session = HibernateUtil.getSessionFactory().openSession();
-            entity =  session.load(Transaction.class, id);
+            entity =  session.get(Transaction.class, id);
         } catch (Exception e) {
             log.error("Can not get by ID Transaction object :(", e);
             throw e;
