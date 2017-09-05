@@ -51,13 +51,12 @@ public class EntityDAOImpl implements EntityDAO {
     }
 
     @Override
-    public Object getById(String className, int id) throws SQLException, ClassNotFoundException {
+    public Object getById(Class entitytClass, int id) throws SQLException {
         Session session = null;
         Object entity = null;
         try {
-            Class classTemp = Class.forName(className);
             session = HibernateUtil.getSessionFactory().openSession();
-            entity =  session.load(classTemp.getName(), id);
+            entity =  session.load(entitytClass.getName(), id);
         } catch (Exception e) {
             log.error("Can not get by ID "+entity.getClass()+" object :(", e);
             throw e;
@@ -70,13 +69,12 @@ public class EntityDAOImpl implements EntityDAO {
     }
 
     @Override
-    public Collection getAll(String className) throws SQLException, ClassNotFoundException {
+    public Collection getAll(Class entitytClass) throws SQLException {
         Session session = null;
         List entitys = new ArrayList();
         try {
-            Class classTemp = Class.forName(className);
             session = HibernateUtil.getSessionFactory().openSession();
-            entitys = session.createCriteria(classTemp.getName()).list();
+            entitys = session.createCriteria(entitytClass.getName()).list();
         } catch (Exception e) {
             log.error("Can not get all objects :(", e);
             throw e;

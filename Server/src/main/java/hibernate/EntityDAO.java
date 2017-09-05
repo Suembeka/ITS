@@ -15,9 +15,9 @@ public interface EntityDAO {
     
     public void delete(Object entity) throws SQLException;
 
-    public Object getById(String className, int id) throws SQLException, ClassNotFoundException;
+    public Object getById(Class entitytClass, int id) throws SQLException;
 
-    public Collection getAll(String className) throws SQLException, ClassNotFoundException;
+    public Collection getAll(Class entitytClass) throws SQLException;
 
     
 
