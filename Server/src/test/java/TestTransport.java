@@ -18,7 +18,7 @@ public class TestTransport extends TestCase {
    
 
   public void testToRead() throws Exception {
-    Transport t = (Transport) factory.getEntityDAO().getById(Transport.class.getName(), 1);
+    Transport t = (Transport) factory.getEntityDAO().getById(Transport.class, 1);
     if(t.getId() !=1) throw new Exception("error id");
     if(t.getGovNumber()==null||t.getGovNumber().isEmpty()) throw new Exception("error gov number");
     if(t.getType() !=1) throw new Exception("error type");

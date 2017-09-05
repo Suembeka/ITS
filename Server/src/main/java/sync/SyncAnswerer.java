@@ -5,17 +5,17 @@
  */
 package sync;
 
-import static sync.Message.MessageTypes.start_sync;
+import static sync.Message.MessageTypes.send_data;
 
 /**
  *
  * @author ksinn
  */
-public class StartAnswer implements Answer{
+public class SyncAnswerer implements Answerer{
 
     @Override
     public boolean canAnswer(Message message) {
-        return message.getType().equals(start_sync);
+        return message.getType().equals(send_data);
     }
 
     @Override

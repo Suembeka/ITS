@@ -24,7 +24,7 @@ public class TestStation extends TestCase {
     st.setLatlng("1312156");
     st.setType(1);
     factory.getEntityDAO().add(st);
-    st = (Station) factory.getEntityDAO().getById(Station.class.getName(), st.getId());
+    st = (Station) factory.getEntityDAO().getById(Station.class, st.getId());
     if(!st.getName().equals("test")||st.getType()!=1)
         throw new Exception("Не соответствуют"); 
     st.setName("test1");

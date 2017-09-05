@@ -18,12 +18,12 @@ public class TestStationAssociation extends TestCase {
    
 
   public void testToCRUD() throws Exception {
-      StationAssociation as = (StationAssociation) factory.getEntityDAO().getAll(StationAssociation.class.getName()).toArray()[0];
+      StationAssociation as = (StationAssociation) factory.getEntityDAO().getAll(StationAssociation.class).toArray()[0];
       if(as.getRoute() == null) throw new Exception("Route is null");
       if(as.getStation() == null) throw new Exception("Station is null");
 
-    Route r = (Route) factory.getEntityDAO().getAll(Route.class.getName()).toArray()[0];
-    Station s = (Station) factory.getEntityDAO().getAll(Station.class.getName()).toArray()[0];
+    Route r = (Route) factory.getEntityDAO().getAll(Route.class).toArray()[0];
+    Station s = (Station) factory.getEntityDAO().getAll(Station.class).toArray()[0];
     r.addStation(s, 10);
     factory.getEntityDAO().update(r.getId(), r);
     

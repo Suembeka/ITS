@@ -9,7 +9,7 @@ package sync;
  *
  * @author ksinn
  */
-public interface Answer {
+public interface Answerer {
     public boolean canAnswer(Message message);
     public Message answer(Message message);
     

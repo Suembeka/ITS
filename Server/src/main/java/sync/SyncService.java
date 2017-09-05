@@ -5,11 +5,8 @@
  */
 package sync;
 
-import hibernate.Factory;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -17,13 +14,12 @@ import java.util.logging.Logger;
  */
 public class SyncService {
 
-    private Factory factory;
-    private Set<Answer> answers;
+    private Set<Answerer> answers;
 
     public Message answer(Message inputMessage) throws Exception {
 
         Message outputMessage;
-        Answer answer = findAnswer(inputMessage);
+        Answerer answer = findAnswer(inputMessage);
         if (answer != null) {
             outputMessage = answer.answer(inputMessage);
         } else {
@@ -35,10 +31,10 @@ public class SyncService {
 
     }
 
-    private Answer findAnswer(Message inputMessage) {
-        Iterator<Answer> iterator = answers.iterator();
+    private Answerer findAnswer(Message inputMessage) {
+        Iterator<Answerer> iterator = answers.iterator();
         while(iterator.hasNext()){
-            Answer next = iterator.next();
+            Answerer next = iterator.next();
             if(next.canAnswer(inputMessage)) 
                 return next;
         }

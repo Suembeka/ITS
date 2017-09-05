@@ -106,4 +106,22 @@ public class TransactionDAOImpl implements TransactionDAO {
         }
     }
 
+    @Override
+    public Transaction getLastForTransportId(int transport_id) throws SQLException {
+        Session session = null;
+        Transaction entity = null;
+        try {
+            session = HibernateUtil.getSessionFactory().openSession();
+            entity =  session.get(Transaction.class, id);
+        } catch (Exception e) {
+            log.error("Can not get by ID Transaction object :(", e);
+            throw e;
+        } finally {
+            if (session != null && session.isOpen()) {
+                session.close();
+            }
+        }
+        return entity;
+    }
+
 }
