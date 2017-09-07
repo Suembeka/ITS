@@ -38,8 +38,6 @@ var GPS = {
             return;
         }
 
-        console.log("Текущая станция = " + dbModule.GPS.curStationOrder);
-
         for (var i = 0; i < dbModule.GPS.stationsLatLng.length; i++) {
             j = i + 1;
 
@@ -77,8 +75,8 @@ var GPS = {
         }
 
         if (dbModule.GPS.curStation !== min.id) {
-            if ((min.order === 1) &&
-                (dbModule.GPS.curStationOrder > 1)) {
+            console.log("Текущая станция = " + dbModule.GPS.curStationOrder);
+            if (min.order < dbModule.GPS.curStationOrder) {
                 this.newCircle(dbModule, min.id);
             } else {
                 dbModule.GPS.curStationOrder = min.order;

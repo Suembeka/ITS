@@ -79,7 +79,7 @@ var DAO = {
                                reject();
                            }*/
         });
-        //});
+        /*});*/
     },
 
     getPaymentAmount: function () {
@@ -98,20 +98,43 @@ var DAO = {
         });
     },
 
-    setTransaction: function (cardID, cardType) {
-        var timestamp = new Date().toMysqlFormat();
+    checkCircle: function (card_id, arduino) {
+        return new Promise(function (resolve, reject) {
+            DAO.connection.query('SELECT circle_number FROM transactions WHERE card_id = ' + card_id + ';', function (err, result) {
+                if (!DAO.logError(err)) {
+                    if (result.length !== 0) {
+                        if (result[0].circle_number !== DAO.GPS.circlesCount) {
+                            return resolve(arduino);
+                        } else {
+                            return reject("Уже оплачено!!!...");
+                        }
+                    } else {
+                        return resolve(arduino);
+                    }
+                }
+            });
+        });
+    },
+
+    setTransaction: function (cardID, cardType, lastPayTime) {
+        var timestamp = new Date(lastPayTime).toMysqlFormat();
         var pay;
         if (cardType === 0) {
             pay = DAO.state.paymentAmount;
         } else {
             pay = 0;
         }
-        DAO.connection.query("INSERT INTO `transactions` (`transaction_id`, `time`, `transport_id`, `route_id`, `station_id`, `card_id`, `card_type`, `payment_amount`) VALUES ('" + uuidv1() + "', '" + timestamp + "', '" + DAO.state.transportID + "', '" + DAO.state.routeID + "', '" + DAO.GPS.curStation + "', '" + cardID + "', '" + cardType + "', '" + pay + "');",
-            function (err, result) {
-                if (!DAO.logError(err)) {
-                    console.log("Transaction's inserted!");
-                }
-            });
+
+        DAO.connection.query('SELECT circles_count FROM misc;', function (err, result) {
+            if (!DAO.logError(err)) {
+                DAO.connection.query("INSERT INTO `transactions` (`transaction_id`, `time`, `transport_id`, `route_id`, `station_id`, `card_id`, `card_type`, `payment_amount`, `circle_number`) VALUES ('" + uuidv1() + "', '" + timestamp + "', '" + DAO.state.transportID + "', '" + DAO.state.routeID + "', '" + DAO.GPS.curStation + "', '" + cardID + "', '" + cardType + "', '" + pay + "', '" + result[0].circles_count + "');",
+                    function (err, result1) {
+                        if (!DAO.logError(err)) {
+                            console.log("Transaction's inserted!");
+                        }
+                    });
+            }
+        });
     },
 
     getDataForSync: function () {

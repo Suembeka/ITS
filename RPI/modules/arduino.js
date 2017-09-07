@@ -41,8 +41,6 @@ const Parser = require('./parser');
 const DAO = require('./dao.js');
 var shell = require('shelljs');
 
-Logger.output = "console";
-
 var availablePorts = shell.ls('-l', '/dev/ttyACM*');
 var allSerials = [];
 
@@ -121,26 +119,31 @@ class Arduino extends EventEmitter {
 
         var card = new Card(getInt(cardBlocks['00'].slice(0, 4)), getInt(cardBlocks['04'].slice(0, 1)), getInt(cardBlocks['04'].slice(1, 1 + 6)), getInt(cardBlocks['05'].slice(0, 2)), getInt(cardBlocks['05'].slice(2, 2 + 3)), getInt(cardBlocks['05'].slice(5, 5 + 6)));
 
-        if (Date.now() - card.getInfo().lastPaytime < 10000) {
+        /*if (Date.now() - card.getInfo().lastPaytime < 10000) {
             console.log('Reject');
             return;
-        }
+        }*/
 
-        console.log('Initial card data :');
-        console.log(card);
-        //this.emit('cardFound', card, this.arduinoID);
+        DAO.checkCircle(card.getInfo().cardID, this).then(function (arduino) {
+            console.log('Initial card data :');
+            console.log(card);
+            //this.emit('cardFound', card, this.arduinoID);
 
 
-        function checkHash() {
-            //        Проверка на корректность хеша
-            return true;
-        }
+            function checkHash() {
+                //        Проверка на корректность хеша
+                return true;
+            }
 
-        function checkTime(card) {
-            if (card.getInfo().expireTime < Date.now()) {
-                Logger.writeLog("Время на карте истекло");
+            function checkTime(card) {
+                if (card.getInfo().expireTime < Date.now()) {
+                    Logger.writeLog("Время на карте истекло");
+                    Logger.log({
+                        file: __filename,
+                        msg: 'Время на карте истекло'
+                    });
 
-                /*Logger.writeLog("Изменение данных...");
+                    /*Logger.writeLog("Изменение данных...");
 		var myDate="26-10-2017";
 		myDate=myDate.split("-");
 		var newDate=myDate[1]+","+myDate[0]+","+myDate[2];
@@ -154,59 +157,61 @@ class Arduino extends EventEmitter {
 	            };
 	            arduino.write(card, 1);*/
 
-                return false;
-            } else {
-                return true;
+                    return false;
+                } else {
+                    return true;
+                }
             }
-        }
 
-        function checkBalance(card) {
-            if (card.getInfo().balance < DAO.state.paymentAmount) {
-                Logger.writeLog("Недостаточно средств на карте");
-                return false;
-            } else {
-                return true;
+            function checkBalance(card) {
+                if (card.getInfo().balance < DAO.state.paymentAmount) {
+                    Logger.writeLog("Недостаточно средств на карте");
+                    return false;
+                } else {
+                    return true;
+                }
             }
-        }
 
-        function changeTime(card) {
-            card.getInfo().lastPaytime = Date.now();
-        }
-
-        function changeBalance(card) {
-            card.getInfo().balance = card.getInfo().balance - DAO.state.paymentAmount;
-            card.getInfo().lastPaytime = Date.now();
-        }
-
-        function generateNewHash() {}
-
-
-        //        Проверка
-        if (checkHash()) {
-            //        Снятие средств
-            if (checkTime(card)) {
-                changeTime(card);
-                changed = true;
-            } else if (checkBalance(card)) {
-                changeBalance(card);
-                changed = true;
+            function changeTime(card) {
+                card.getInfo().lastPaytime = Date.now();
             }
-        }
 
-        //generateNewHash();
+            function changeBalance(card) {
+                card.getInfo().balance = card.getInfo().balance - DAO.state.paymentAmount;
+                card.getInfo().lastPaytime = Date.now();
+            }
 
-        if (changed) {
-            console.log('Changed card data :');
-            console.log(card);
-            //this.emit('cardFound', card, this.arduinoID);
-            //console.log("arduinoID = " + this.arduinoID);
-            this.write(card);
-            this.makeTransaction(card);
-        }
+            function generateNewHash() {}
+
+
+            //        Проверка
+            if (checkHash()) {
+                //        Снятие средств
+                if (checkTime(card)) {
+                    changeTime(card);
+                    changed = true;
+                } else if (checkBalance(card)) {
+                    changeBalance(card);
+                    changed = true;
+                }
+            }
+
+            //generateNewHash();
+
+            if (changed) {
+                console.log('Changed card data :');
+                console.log(card);
+                arduino.write(card);
+                arduino.makeTransaction(card);
+            }
+        }).catch(function (err) {
+            console.log(err);
+            return;
+        });
     }
 
     makeTransaction(card) {
-        DAO.setTransaction(card.getInfo().cardID, card.getInfo().cardType);
+        DAO.setTransaction(card.getInfo().cardID, card.getInfo().cardType, card.getInfo().lastPaytime);
     }
 };
 
@@ -245,6 +250,7 @@ allSerials.init = function () {
     }
 
     Parser.on('cardFound', function (cardData, arduinoID) {
+        console.log("________________________________\n");
         console.log("arduinoID = " + arduinoID)
         allSerials[arduinoID].processCard(cardData, arduinoID);
     });
