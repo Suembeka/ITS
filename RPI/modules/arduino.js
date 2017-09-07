@@ -39,30 +39,40 @@ const Logger = require('./logger');
 const EventEmitter = require('events');
 const Parser = require('./parser');
 const DAO = require('./dao.js');
+var shell = require('shelljs');
 
 Logger.output = "console";
 
-// TODO: add port finder
-/*const Serial = new SerialPort('COM5', {
-    baudRate: 115200
-});*/
+var availablePorts = shell.ls('-l', '/dev/ttyACM*');
+var allSerials = [];
 
-const Serial = new SerialPort('/dev/ttyACM0', {
-    baudRate: 115200
-});
+class Card {
+    constructor(cardID, cardType, expireTime, lastTransportID, balance, lastPaytime) {
+        this.cardID = cardID;
+        this.cardType = cardType;
+        this.expireTime = expireTime;
+        this.lastTransportID = lastTransportID;
+        this.balance = balance;
+        this.lastPaytime = lastPaytime;
+    }
 
-const SerialParser = Serial.pipe(new SerialPort.parsers.Readline());
+    getInfo() {
+        return this;
+    }
+};
 
-//var Serial2 = new SerialPort("COM5", {
-//    baudrate: 115200,
-//    parser: SerialPort.parsers.Readline
-//});
-
-var cardFromArduino1;
-
-// TODO: add card scheme
 class Arduino extends EventEmitter {
-    write(card, arduinoID) {
+    setValues(arduinoID, serial, serialParser) {
+        this.arduinoID = arduinoID;
+        this.serial = serial;
+        this.serialParser = serialParser;
+    }
+
+    getValues() {
+        return this;
+    }
+
+    write(card) {
         function getHex(decimal, sizeInBytes) {
             var binStr = decimal.toString(2);
             binStr = binStr.padStart(sizeInBytes * 8, '0');
@@ -85,18 +95,15 @@ class Arduino extends EventEmitter {
                 .join('').padEnd(32, '0')
         })
 
-        if (arduinoID == 1) {
-            Serial.write(encodedData, function () {
-                Logger.log({
-                    file: __filename,
-                    msg: 'Write to Card'
-                });
+        this.serial.write(encodedData, function () {
+            Logger.log({
+                file: __filename,
+                msg: 'Write to Card'
             });
-        } else {}
+        });
     }
 
-    processCard(cardBlocks, arduinoID, currentPayment) {
-        //console.log(cardBlocks);
+    processCard(cardBlocks) {
         var changed = false;
         for (var block in cardBlocks) {
             cardBlocks[block] = cardBlocks[block].split(/(.{2})/).filter(function (el) {
@@ -112,22 +119,16 @@ class Arduino extends EventEmitter {
             return parseInt(bytes.join(''), 2);
         }
 
-        cardFromArduino1 = {
-            cardID: getInt(cardBlocks['00'].slice(0, 4)),
-            cardType: getInt(cardBlocks['04'].slice(0, 1)),
-            expireTime: getInt(cardBlocks['04'].slice(1, 1 + 6)),
-            lastTransportID: getInt(cardBlocks['05'].slice(0, 2)),
-            balance: getInt(cardBlocks['05'].slice(2, 2 + 3)),
-            lastPaytime: getInt(cardBlocks['05'].slice(5, 5 + 6))
-        }
+        var card = new Card(getInt(cardBlocks['00'].slice(0, 4)), getInt(cardBlocks['04'].slice(0, 1)), getInt(cardBlocks['04'].slice(1, 1 + 6)), getInt(cardBlocks['05'].slice(0, 2)), getInt(cardBlocks['05'].slice(2, 2 + 3)), getInt(cardBlocks['05'].slice(5, 5 + 6)));
 
-        if (Date.now() - cardFromArduino1.lastPaytime < 10000) {
+        if (Date.now() - card.getInfo().lastPaytime < 10000) {
             console.log('Reject');
             return;
         }
 
         console.log('Initial card data :');
-        this.emit('cardFound', cardFromArduino1, arduinoID);
+        console.log(card);
+        //this.emit('cardFound', card, this.arduinoID);
 
 
         function checkHash() {
@@ -136,7 +137,7 @@ class Arduino extends EventEmitter {
         }
 
         function checkTime(card) {
-            if (card.expireTime < Date.now()) {
+            if (card.getInfo().expireTime < Date.now()) {
                 Logger.writeLog("Время на карте истекло");
 
                 /*Logger.writeLog("Изменение данных...");
@@ -160,7 +161,7 @@ class Arduino extends EventEmitter {
         }
 
         function checkBalance(card) {
-            if (card.balance < DAO.state.paymentAmount) {
+            if (card.getInfo().balance < DAO.state.paymentAmount) {
                 Logger.writeLog("Недостаточно средств на карте");
                 return false;
             } else {
@@ -169,12 +170,12 @@ class Arduino extends EventEmitter {
         }
 
         function changeTime(card) {
-            card.lastPaytime = Date.now();
+            card.getInfo().lastPaytime = Date.now();
         }
 
         function changeBalance(card) {
-            card.balance = card.balance - DAO.state.paymentAmount;
-            card.lastPaytime = Date.now();
+            card.getInfo().balance = card.getInfo().balance - DAO.state.paymentAmount;
+            card.getInfo().lastPaytime = Date.now();
         }
 
         function generateNewHash() {}
@@ -183,11 +184,11 @@ class Arduino extends EventEmitter {
         //        Проверка
         if (checkHash()) {
             //        Снятие средств
-            if (checkTime(cardFromArduino1)) {
-                changeTime(cardFromArduino1);
+            if (checkTime(card)) {
+                changeTime(card);
                 changed = true;
-            } else if (checkBalance(cardFromArduino1)) {
-                changeBalance(cardFromArduino1);
+            } else if (checkBalance(card)) {
+                changeBalance(card);
                 changed = true;
             }
         }
@@ -196,29 +197,82 @@ class Arduino extends EventEmitter {
 
         if (changed) {
             console.log('Changed card data :');
-            this.emit('cardFound', cardFromArduino1, arduinoID);
-            arduino.write(cardFromArduino1, 1);
-            arduino.makeTransaction(cardFromArduino1);
+            console.log(card);
+            //this.emit('cardFound', card, this.arduinoID);
+            //console.log("arduinoID = " + this.arduinoID);
+            this.write(card);
+            this.makeTransaction(card);
         }
     }
 
     makeTransaction(card) {
-        DAO.setTransaction(card.cardID, card.cardType);
+        DAO.setTransaction(card.getInfo().cardID, card.getInfo().cardType);
     }
 };
 
-var arduino = new Arduino();
 
-Parser.on('cardFound', function (cardData, arduinoID) {
-    arduino.processCard(cardData, arduinoID);
+allSerials.init = function () {
+    for (var i = 0; i < availablePorts.length; i++) {
+        var serial = new SerialPort(availablePorts[i].name, {
+            baudRate: 115200
+        });
+
+        var serialParser = serial.pipe(new SerialPort.parsers.Readline());
+
+        serialParser.on('open', function () {
+            Logger.log({
+                file: __filename,
+                msg: 'Serial Port Opened'
+            });
+        }).on('error', function (err) {
+            Logger.log({
+                file: __filename,
+                msg: 'Serial Port Open Fail',
+                err: err
+            });
+        }).on('data', function (data) {
+            for (var i = 0; i < allSerials.length; i++) {
+                if (allSerials[i].getValues().serialParser === this) {
+                    Parser.parse(data, allSerials[i].getValues().arduinoID); // second is arduino id
+                }
+            }
+        });
+
+        var obj = new Arduino();
+        obj.setValues(i, serial, serialParser);
+
+        allSerials[i] = obj;
+    }
+
+    Parser.on('cardFound', function (cardData, arduinoID) {
+        console.log("arduinoID = " + arduinoID)
+        allSerials[arduinoID].processCard(cardData, arduinoID);
+    });
+
+    Parser.on('writeStatus', function (status, arduinoID) {
+        allSerials[arduinoID].emit('writeStatus', status, arduinoID);
+    });
+}
+
+
+/*const Serial = new SerialPort('COM5', {
+    baudRate: 115200
+});*/
+
+/*const Serial = new SerialPort('/dev/ttyACM0', {
+    baudRate: 115200
 });
 
-Parser.on('writeStatus', function (status, arduinoID) {
-    arduino.emit('writeStatus', status, arduinoID);
-});
+const SerialParser = Serial.pipe(new SerialPort.parsers.Readline());*/
 
+//var Serial2 = new SerialPort("COM5", {
+//    baudrate: 115200,
+//    parser: SerialPort.parsers.Readline
+//});
 
-SerialParser.on('open', function () {
+//var cardFromArduino1;
+
+/*SerialParser.on('open', function () {
     Logger.log({
         file: __filename,
         msg: 'Serial Port Opened'
@@ -231,7 +285,7 @@ SerialParser.on('open', function () {
     });
 }).on('data', function (data) {
     Parser.parse(data, 1); // 1 = arduino id
-});
+});*/
 
 /*
 // Testing
@@ -255,4 +309,4 @@ setInterval(function() {
 }, 2000);
 */
 
-module.exports = arduino;
+module.exports = allSerials;

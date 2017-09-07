@@ -45,19 +45,21 @@ class App {
     }
 
     initArduino() {
-        Arduino.on('cardFound', this.processPayment);
-        Arduino.on('writeStatus', this.acceptTranscation);
+        Arduino.init();
+        for (var i = 0; i < Arduino.length; i++) {
+            Arduino[i].getValues().on('cardFound', this.processPayment);
+            Arduino[i].getValues().on('writeStatus', this.acceptTranscation);
+        }
     }
 
-    processPayment(card, arduinoID) {
-        console.log(card);
-        if (Date.now() - card.lastPaytime < 10000) {
+    processPayment(card) {
+        if (Date.now() - card.getInfo().lastPaytime < 10000) {
             console.log('Reject');
             return;
         }
     }
 
-    acceptTranscation(paymentStatus, arduinoID) {
+    acceptTranscation(paymentStatus) {
         //paymentStatus = true or false
     }
 };

@@ -13,8 +13,6 @@ class Parser extends EventEmitter {
     // '\[STATUS|FAIL\]'
 
     parse(data, arduinoID) {
-        //console.log('PARSER: ', data);
-
         var block;
 
         data = data.replace(/[\r\n]/g, '');
