@@ -98,6 +98,7 @@ class Arduino extends EventEmitter {
                 file: __filename,
                 msg: 'Write to Card'
             });
+            DAO.trCommit();
         });
     }
 
@@ -199,19 +200,19 @@ class Arduino extends EventEmitter {
             //generateNewHash();
 
             if (changed) {
-                console.log('Changed card data :');
-                console.log(card);
-                arduino.write(card);
-                arduino.makeTransaction(card);
+                DAO.setTransaction(card.getInfo().cardID, card.getInfo().cardType).then(function (time) {
+                    console.log('Changed card data :');
+
+                    card.lastPaytime = new Date(time).getTime() / 1000.0;
+                    console.log("card.lastPaytime = " + card.lastPaytime);
+                    console.log(card);
+                    arduino.write(card);
+                });
             }
         }).catch(function (err) {
             console.log(err);
             return;
         });
-    }
-
-    makeTransaction(card) {
-        DAO.setTransaction(card.getInfo().cardID, card.getInfo().cardType, card.getInfo().lastPaytime);
     }
 };
 

@@ -6,10 +6,6 @@ function twoDigits(d) {
     return d.toString();
 }
 
-Date.prototype.toMysqlFormat = function () {
-    return this.getUTCFullYear() + "-" + twoDigits(1 + this.getUTCMonth()) + "-" + twoDigits(this.getUTCDate()) + " " + twoDigits(this.getUTCHours()) + ":" + twoDigits(this.getUTCMinutes()) + ":" + twoDigits(this.getUTCSeconds());
-};
-
 var MySQL = require('mysql');
 var Logger = require('./logger');
 const uuidv1 = require('uuid/v1');
@@ -116,8 +112,7 @@ var DAO = {
         });
     },
 
-    setTransaction: function (cardID, cardType, lastPayTime) {
-        var timestamp = new Date(lastPayTime).toMysqlFormat();
+    setTransaction: function (cardID, cardType) {
         var pay;
         if (cardType === 0) {
             pay = DAO.state.paymentAmount;
@@ -125,14 +120,45 @@ var DAO = {
             pay = 0;
         }
 
-        DAO.connection.query('SELECT circles_count FROM misc;', function (err, result) {
-            if (!DAO.logError(err)) {
-                DAO.connection.query("INSERT INTO `transactions` (`transaction_id`, `time`, `transport_id`, `route_id`, `station_id`, `card_id`, `card_type`, `payment_amount`, `circle_number`) VALUES ('" + uuidv1() + "', '" + timestamp + "', '" + DAO.state.transportID + "', '" + DAO.state.routeID + "', '" + DAO.GPS.curStation + "', '" + cardID + "', '" + cardType + "', '" + pay + "', '" + result[0].circles_count + "');",
-                    function (err, result1) {
-                        if (!DAO.logError(err)) {
-                            console.log("Transaction's inserted!");
-                        }
+        return new Promise(function (resolve, reject) {
+            DAO.connection.query('SELECT circles_count FROM misc;', function (err, result) {
+                if (!DAO.logError(err)) {
+                    DAO.connection.query("START TRANSACTION;", function (err, res) {
+                        DAO.connection.query("INSERT INTO `transactions` (`transaction_id`,`transport_id`, `route_id`, `station_id`, `card_id`, `card_type`, `payment_amount`, `circle_number`) VALUES ('" + uuidv1() + "', '" + DAO.state.transportID + "', '" + DAO.state.routeID + "', '" + DAO.GPS.curStation + "', '" + cardID + "', '" + cardType + "', '" + pay + "', '" + result[0].circles_count + "');",
+                            function (err, result1) {
+                                if (!DAO.logError(err)) {
+                                    console.log("Start transaction...");
+
+                                    DAO.connection.query('SELECT time FROM transactions WHERE card_id = ' + cardID + ' ORDER BY id DESC LIMIT 1;', function (err, result2) {
+                                        if (!DAO.logError(err)) {
+                                            console.log("result2[0].time = " + result2[0].time);
+                                            return resolve(result2[0].time);
+                                        } else {
+                                            return reject("Запись не найдена!!!");
+                                        }
+                                    });
+                                } else {
+                                    return reject("Транзакция не произведена!!!");
+                                }
+                            });
                     });
+                }
+            });
+        });
+    },
+
+    trCommit: function () {
+        DAO.connection.query('COMMIT;', function (err, result) {
+            if (!DAO.logError(err)) {
+                console.log("Commited!!");
+            }
+        });
+    },
+
+    trRollback: function () {
+        DAO.connection.query('ROLLBACK;', function (err, result) {
+            if (!DAO.logError(err)) {
+                console.log("Rollbacked!!");
             }
         });
     },
