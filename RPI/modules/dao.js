@@ -7,10 +7,8 @@ function twoDigits(d) {
 }
 
 var MySQL = require('mysql');
-var Logger = require('./logger');
+var Logger = require('./logger')(module);
 const uuidv1 = require('uuid/v1');
-
-
 
 var DAO = {
     connection: null,
@@ -39,10 +37,7 @@ var DAO = {
 
     logError: function (err) {
         if (err) {
-            Logger.log({
-                file: __filename,
-                err: err
-            });
+            Logger.error(err);
             return true;
         } else {
             return false;
@@ -58,7 +53,7 @@ var DAO = {
         DAO.getPaymentAmount();
         DAO.getRouteID();
         DAO.GPS.allStations();
-        console.log("Init() successful");
+        Logger.info("Init() successful");
     },
 
     state: {},
@@ -127,11 +122,11 @@ var DAO = {
                         DAO.connection.query("INSERT INTO `transactions` (`transaction_id`,`transport_id`, `route_id`, `station_id`, `card_id`, `card_type`, `payment_amount`, `circle_number`) VALUES ('" + uuidv1() + "', '" + DAO.state.transportID + "', '" + DAO.state.routeID + "', '" + DAO.GPS.curStation + "', '" + cardID + "', '" + cardType + "', '" + pay + "', '" + result[0].circles_count + "');",
                             function (err, result1) {
                                 if (!DAO.logError(err)) {
-                                    console.log("Start transaction...");
+                                    Logger.info("Start transaction...");
 
                                     DAO.connection.query('SELECT time FROM transactions WHERE card_id = ' + cardID + ' ORDER BY id DESC LIMIT 1;', function (err, result2) {
                                         if (!DAO.logError(err)) {
-                                            console.log("result2[0].time = " + result2[0].time);
+                                            Logger.info("result2[0].time = " + result2[0].time);
                                             return resolve(result2[0].time);
                                         } else {
                                             return reject("Запись не найдена!!!");
@@ -150,7 +145,7 @@ var DAO = {
     trCommit: function () {
         DAO.connection.query('COMMIT;', function (err, result) {
             if (!DAO.logError(err)) {
-                console.log("Commited!!");
+                Logger.info("Commited!!");
             }
         });
     },
@@ -158,7 +153,7 @@ var DAO = {
     trRollback: function () {
         DAO.connection.query('ROLLBACK;', function (err, result) {
             if (!DAO.logError(err)) {
-                console.log("Rollbacked!!");
+                Logger.info("Rollbacked!!");
             }
         });
     },
@@ -216,7 +211,7 @@ var DAO = {
         setCurrentStation: function () {
             DAO.connection.query('UPDATE misc SET current_station_id = ' + DAO.GPS.curStation + ';', function (err) {
                 if (!DAO.logError(err)) {
-                    Logger.writeLog('Current station has changed...');
+                    Logger.info('Current station has changed...');
                 }
             });
         },
@@ -224,7 +219,7 @@ var DAO = {
         increaseCircle: function () {
             DAO.connection.query('UPDATE misc SET circles_count = ' + DAO.GPS.circlesCount + ';', function (err) {
                 if (!DAO.logError(err)) {
-                    Logger.writeLog('Circles have increased...');
+                    Logger.info('Circles have increased...');
                 }
             });
         }

@@ -1,7 +1,7 @@
 'use strict';
 
 const DAO = require('./modules/dao.js');
-const Logger = require('./modules/logger.js');
+const Logger = require('./modules/logger.js')(module);
 const GPS = require('./modules/gps.js');
 const Arduino = require('./modules/arduino.js');
 
@@ -54,7 +54,7 @@ class App {
 
     processPayment(card) {
         if (Date.now() - card.getInfo().lastPaytime < 10000) {
-            console.log('Reject');
+            Logger.info('Reject');
             return;
         }
     }
@@ -71,6 +71,6 @@ app.initGPS();
 app.initArduino();
 
 process.on('unhandledRejection', (reason, p) => {
-    console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+    Logger.info('Unhandled Rejection at: Promise', p, 'reason:', reason);
     DAO.trRollback();
 });

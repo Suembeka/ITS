@@ -1,6 +1,6 @@
 'use strict';
 
-const logger_file = require('./logger.js');
+const Logger = require('./logger.js')(module);
 const SerialPort = require('serialport');
 const GPSReader = require('gps');
 
@@ -14,7 +14,7 @@ var GPSState = gpsReader.state;
 SerialParser.on('data', function (data) {
     gpsReader.update(data);
 }).on('error', function (err) {
-    logger_file.writeLog(err);
+    Logger.error(err);
 });
 
 var GPS = {
@@ -29,12 +29,12 @@ var GPS = {
             };
 
         if (!dbModule.isInit) {
-            console.log('dbModule.isInit = ' + dbModule.isInit);
+            Logger.info('dbModule.isInit = ' + dbModule.isInit);
             return;
         }
 
         if (!GPSState.lat || !GPSState.lon) {
-            console.log('!GPSState.lat || !GPSState.lont = true ' + Date.now());
+            Logger.info('!GPSState.lat || !GPSState.lont = true ' + Date.now());
             return;
         }
 
@@ -75,7 +75,7 @@ var GPS = {
         }
 
         if (dbModule.GPS.curStation !== min.id) {
-            console.log("Текущая станция = " + dbModule.GPS.curStationOrder);
+            Logger.info("Текущая станция = " + dbModule.GPS.curStationOrder);
             if (min.order < dbModule.GPS.curStationOrder) {
                 this.newCircle(dbModule, min.id);
             } else {

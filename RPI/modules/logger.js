@@ -1,53 +1,28 @@
 'use strict';
 
-var fs = require('fs'),
-	dateTime = require('node-datetime');
+const winston = require('winston');
+const dateTime = require('node-datetime');
 
-module.exports = (function (){
-	var Logger = {};
+module.exports = function(_module) {
 
-	Logger.output = 'file';
-	Logger.options = {
-		logsFolderPath: 'logs/'
-	};
+	let filename = _module.filename.match(/[^/]+\.js$/);
+	let allLogsFilename = dateTime.create().format('Ymd');
 
-	Logger.log = function({file, msg, err}) {
-		var time = dateTime.create(),
-			currentTime = time.format('d/m/Y H:M:S'),
-			fileName = time.format('Ymd') + '.log',
-			text = [
-				'['+currentTime+']',
-				'['+file+']',
-				msg,
-				(err ? ('\n'+ JSON.stringify(err)) : '')
-			].join(' ') + '\n';
+	let transports = [
+		new winston.transports.Console({
+			timestamp: true,
+			colorize: true,
+			level: 'info'
+		}),
+		new winston.transports.File({
+			filename: '../logs/' + filename + '.log',
+			level: 'warning'
+		}),
+		new winston.transports.File({
+			filename: '../logs/' + allLogsFilename + '.log',
+			level: 'info'
+		})
+	];
 
-		if(Logger.output == 'file') {
-			fs.appendFile(Logger.options.logsFolderPath + fileName, text, function(err) {
-				if(err) { console.log(err); }
-			});
-		} else {
-			console.log(text);
-		}
-	};
-
-	// TODO: make it special
-	Logger.error = function() {
-		Logger.log.apply(Logger, [].slice.call(arguments));
-	};
-	// TODO: make it special
-	Logger.info = function() {
-		Logger.log.apply(Logger, [].slice.call(arguments));
-	};
-	// TODO: make it special
-	Logger.debug = function() {
-		Logger.log.apply(Logger, [].slice.call(arguments));
-	};
-
-	// Legacy
-	Logger.writeLog = function(text) {
-		console.log(text);
-	};
-
-	return Logger;
-})();
+	return new winston.Logger({ transports: transports });
+}

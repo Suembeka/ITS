@@ -35,7 +35,7 @@ if (!String.prototype.padEnd) {
 
 
 const SerialPort = require('serialport');
-const Logger = require('./logger');
+const Logger = require('./logger')(module);
 const EventEmitter = require('events');
 const Parser = require('./parser');
 const DAO = require('./dao.js');
@@ -94,10 +94,7 @@ class Arduino extends EventEmitter {
         })
 
         this.serial.write(encodedData, function () {
-            Logger.log({
-                file: __filename,
-                msg: 'Write to Card'
-            });
+            Logger.info("Write to Card");
             DAO.trCommit();
         });
     }
@@ -111,7 +108,7 @@ class Arduino extends EventEmitter {
         }
 
         function getInt(bytes) {
-            //console.log(bytes);
+            //Logger.info(bytes);
             bytes = bytes.map(function (hexByte) {
                 return parseInt(hexByte, 16).toString(2).padStart(8, '0');
             });
@@ -121,13 +118,13 @@ class Arduino extends EventEmitter {
         var card = new Card(getInt(cardBlocks['00'].slice(0, 4)), getInt(cardBlocks['04'].slice(0, 1)), getInt(cardBlocks['04'].slice(1, 1 + 6)), getInt(cardBlocks['05'].slice(0, 2)), getInt(cardBlocks['05'].slice(2, 2 + 3)), getInt(cardBlocks['05'].slice(5, 5 + 6)));
 
         /*if (Date.now() - card.getInfo().lastPaytime < 10000) {
-            console.log('Reject');
+            Logger.info('Reject');
             return;
         }*/
 
         DAO.checkCircle(card.getInfo().cardID, this).then(function (arduino) {
-            console.log('Initial card data :');
-            console.log(card);
+            Logger.info('Initial card data :');
+            Logger.info(card);
             //this.emit('cardFound', card, this.arduinoID);
 
 
@@ -138,13 +135,9 @@ class Arduino extends EventEmitter {
 
             function checkTime(card) {
                 if (card.getInfo().expireTime < Date.now()) {
-                    Logger.writeLog("Время на карте истекло");
-                    Logger.log({
-                        file: __filename,
-                        msg: 'Время на карте истекло'
-                    });
+                    Logger.info("Время на карте истекло");
 
-                    /*Logger.writeLog("Изменение данных...");
+                    /*Logger.info("Изменение данных...");
 		var myDate="26-10-2017";
 		myDate=myDate.split("-");
 		var newDate=myDate[1]+","+myDate[0]+","+myDate[2];
@@ -166,7 +159,7 @@ class Arduino extends EventEmitter {
 
             function checkBalance(card) {
                 if (card.getInfo().balance < DAO.state.paymentAmount) {
-                    Logger.writeLog("Недостаточно средств на карте");
+                    Logger.info("Недостаточно средств на карте");
                     return false;
                 } else {
                     return true;
@@ -201,16 +194,16 @@ class Arduino extends EventEmitter {
 
             if (changed) {
                 DAO.setTransaction(card.getInfo().cardID, card.getInfo().cardType).then(function (time) {
-                    console.log('Changed card data :');
+                    Logger.info('Changed card data :');
 
                     card.lastPaytime = new Date(time).getTime() / 1000.0;
-                    console.log("card.lastPaytime = " + card.lastPaytime);
-                    console.log(card);
+                    Logger.info("card.lastPaytime = " + card.lastPaytime);
+                    Logger.info(card);
                     arduino.write(card);
                 });
             }
         }).catch(function (err) {
-            console.log(err);
+            Logger.error(err);
             return;
         });
     }
@@ -226,16 +219,9 @@ allSerials.init = function () {
         var serialParser = serial.pipe(new SerialPort.parsers.Readline());
 
         serialParser.on('open', function () {
-            Logger.log({
-                file: __filename,
-                msg: 'Serial Port Opened'
-            });
+            Logger.info("Serial Port Opened");
         }).on('error', function (err) {
-            Logger.log({
-                file: __filename,
-                msg: 'Serial Port Open Fail',
-                err: err
-            });
+            Logger.error("Serial Port Open Fail", err);
         }).on('data', function (data) {
             for (var i = 0; i < allSerials.length; i++) {
                 if (allSerials[i].getValues().serialParser === this) {
@@ -251,8 +237,7 @@ allSerials.init = function () {
     }
 
     Parser.on('cardFound', function (cardData, arduinoID) {
-        console.log("________________________________\n");
-        console.log("arduinoID = " + arduinoID)
+        Logger.info("arduinoID = ", arduinoID)
         allSerials[arduinoID].processCard(cardData, arduinoID);
     });
 
@@ -280,16 +265,9 @@ const SerialParser = Serial.pipe(new SerialPort.parsers.Readline());*/
 //var cardFromArduino1;
 
 /*SerialParser.on('open', function () {
-    Logger.log({
-        file: __filename,
-        msg: 'Serial Port Opened'
-    });
+    Logger.info("Serial Port Opened");
 }).on('error', function (err) {
-    Logger.log({
-        file: __filename,
-        msg: 'Serial Port Open Fail',
-        err: err
-    });
+    Logger.error("Serial Port Open Fail", err);
 }).on('data', function (data) {
     Parser.parse(data, 1); // 1 = arduino id
 });*/

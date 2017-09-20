@@ -3,7 +3,7 @@
 const Request = require('request');
 const DAO = require('./modules/dao.js');
 const Net = require('./modules/net.js');
-const Logger = require('./modules/logger.js');
+const Logger = require('./modules/logger.js')(module);
 
 // TODO: Add package scheme
 class Sync {
@@ -80,11 +80,11 @@ class Sync {
             let packet = this.state.transactions.slice((packetSize * (part - 1)), (packetSize * part));
             sendPromise = sendPromise
                 .then(() => {
-                    console.log('sendData');
+                    Logger.info('sendData');
                     return this.sendData(packet, tries);
                 })
                 .catch(() => {
-                    console.log('send sequence failed');
+                    Logger.info('send sequence failed');
                 });
         }
 
@@ -93,7 +93,7 @@ class Sync {
     }
 
     sendData(packet, tries) {
-        //console.log('sendData try:', tries);
+        //Logger.info('sendData try:', tries);
         if(tries < 0) {
             return Promise.reject();
         }
@@ -101,12 +101,12 @@ class Sync {
             .then(
             // Successful
             () => {
-                //console.log('sendPacket successful');
+                //Logger.info('sendPacket successful');
                 return DAO.confirmTransactions(packet);
             },
             // Not successful
             () => {
-                //console.log('sendPacket not successful');
+                //Logger.info('sendPacket not successful');
                 return new Promise((resolve, reject) => {
                     setTimeout(() => {
                         resolve(this.sendData(packet, tries - 1));
@@ -124,7 +124,7 @@ class Sync {
             }
         })
         .then((response) => {
-            //console.log(response);
+            //Logger.info(response);
             if(response.type == 'sync_status') {
                 if(response.data.status == 200) {
                     return Promise.resolve();
@@ -141,5 +141,5 @@ const sync = new Sync();
 sync.init();
 
 process.on('unhandledRejection', (reason, p) => {
-	console.log('Unhandled Rejection at: Promise', p, 'reason:', reason);
+	Logger.info('Unhandled Rejection at: Promise', p, 'reason:', reason);
 });
