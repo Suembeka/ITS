@@ -24,14 +24,18 @@ var DAO = {
     },
 
     connect: function () {
-        DAO.connection = MySQL.createConnection(DAO.connectionOptions);
+        return new Promise((resolve, reject) => {
+            DAO.connection = MySQL.createConnection(DAO.connectionOptions);
 
-        DAO.connection.connect(function (err) {
-            if (DAO.logError(err)) {
-                DAO.isInit = false;
-            } else {
-                DAO.isInit = true;
-            }
+            DAO.connection.connect(function (err) {
+                if (DAO.logError(err)) {
+                    DAO.isInit = false;
+                    resolve();
+                } else {
+                    DAO.isInit = true;
+                    reject();
+                }
+            });
         });
     },
 
@@ -59,18 +63,41 @@ var DAO = {
     state: {},
 
     getTransportID: function () {
-        /*return Promise.resolve(2); // REMOVE
-        return new Promise((resolve, reject) => {*/
-        DAO.connection.query('SELECT id FROM transports', function (err, result) {
-            if (!DAO.logError(err)) {
-                DAO.state.transportID = result[0].id;
-                /*resolve(DAO.state.transportID);*/
-            }
-            /*else {
-                               reject();
-                           }*/
+        return new Promise((resolve, reject) => {
+            DAO.connection.query('SELECT id FROM transports', function (err, result) {
+                if (!DAO.logError(err)) {
+                    DAO.state.transportID = result[0].id;
+                    resolve(DAO.state.transportID);
+                }
+                else {
+                    reject();
+                }
+            });
         });
-        /*});*/
+    },
+
+    getTransactions: function() {
+        return new Promise((resolve, reject) => {
+            DAO.connection.query('SELECT * FROM transactions WHERE id=(SELECT last_sync_id FROM misc) ORDER BY id LIMIT 10', function (err, result) {
+                if (!DAO.logError(err)) {
+                    resolve(result);
+                } else {
+                    reject();
+                }
+            });
+        });
+    },
+
+    saveLastSyncID: function(lastSyncID) {
+        return new Promise((resolve, reject) => {
+            DAO.connection.query('UPDATE misc SET last_sync_id="'+lastSyncID+'"', function (err, result) {
+                if (!DAO.logError(err)) {
+                    resolve();
+                } else {
+                    reject();
+                }
+            });
+        });
     },
 
     getPaymentAmount: function () {
@@ -155,25 +182,6 @@ var DAO = {
             if (!DAO.logError(err)) {
                 Logger.info("Rollbacked!!");
             }
-        });
-    },
-
-    getDataForSync: function () {
-        return Promise.resolve([{
-            id: 0
-        }, {
-            id: 1
-        }, {
-            id: 2
-        }]); // REMOVE
-        return new Promise((resolve, reject) => {
-            DAO.connection.query('SELECT * FROM transactions ORDER BY id', function (err, result) {
-                if (!DAO.logError(err)) {
-                    resolve(result);
-                } else {
-                    reject();
-                }
-            });
         });
     },
 
