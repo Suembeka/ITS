@@ -40,34 +40,17 @@ const EventEmitter = require('events');
 const Parser = require('./parser');
 const DAO = require('./dao.js');
 var shell = require('shelljs');
+const Card = require('./card.class.js');
 
 var availablePorts = shell.ls('-l', '/dev/ttyACM*');
 var allSerials = [];
 
-class Card {
-    constructor(cardID, cardType, expireTime, lastTransportID, balance, lastPaytime) {
-        this.cardID = cardID;
-        this.cardType = cardType;
-        this.expireTime = expireTime;
-        this.lastTransportID = lastTransportID;
-        this.balance = balance;
-        this.lastPaytime = lastPaytime;
-    }
-
-    getInfo() {
-        return this;
-    }
-};
-
 class Arduino extends EventEmitter {
-    setValues(arduinoID, serial, serialParser) {
+    constructor(arduinoID, serial, serialParser) {
         this.arduinoID = arduinoID;
         this.serial = serial;
         this.serialParser = serialParser;
-    }
-
-    getValues() {
-        return this;
+        this.currentCard = null;
     }
 
     write(card) {
@@ -95,11 +78,12 @@ class Arduino extends EventEmitter {
 
         this.serial.write(encodedData, function () {
             Logger.info("Write to Card");
-            DAO.trCommit();
+            //DAO.trCommit();
         });
     }
 
     processCard(cardBlocks) {
+        Logger.info("Processing card...");
         var changed = false;
         for (var block in cardBlocks) {
             cardBlocks[block] = cardBlocks[block].split(/(.{2})/).filter(function (el) {
@@ -115,103 +99,20 @@ class Arduino extends EventEmitter {
             return parseInt(bytes.join(''), 2);
         }
 
-        var card = new Card(getInt(cardBlocks['00'].slice(0, 4)), getInt(cardBlocks['04'].slice(0, 1)), getInt(cardBlocks['04'].slice(1, 1 + 6)), getInt(cardBlocks['05'].slice(0, 2)), getInt(cardBlocks['05'].slice(2, 2 + 3)), getInt(cardBlocks['05'].slice(5, 5 + 6)));
-
-        /*if (Date.now() - card.getInfo().lastPaytime < 10000) {
-            Logger.info('Reject');
-            return;
-        }*/
-
-        DAO.checkCircle(card.getInfo().cardID, this).then(function (arduino) {
-            Logger.info('Initial card data :');
-            Logger.info(card);
-            //this.emit('cardFound', card, this.arduinoID);
-
-
-            function checkHash() {
-                //        Проверка на корректность хеша
-                return true;
-            }
-
-            function checkTime(card) {
-                if (card.getInfo().expireTime < Date.now()) {
-                    Logger.info("Время на карте истекло");
-
-                    /*Logger.info("Изменение данных...");
-		var myDate="26-10-2017";
-		myDate=myDate.split("-");
-		var newDate=myDate[1]+","+myDate[0]+","+myDate[2];
-
-	            card = {
-	                cardType: 1,
-	                balance: 0,
-	                expireTime: (new Date(newDate).getTime()),
-	                lastTransportID: 255,
-	                lastPaytime: Date.now()
-	            };
-	            arduino.write(card, 1);*/
-
-                    return false;
-                } else {
-                    return true;
-                }
-            }
-
-            function checkBalance(card) {
-                if (card.getInfo().balance < DAO.state.paymentAmount) {
-                    Logger.info("Недостаточно средств на карте");
-                    return false;
-                } else {
-                    return true;
-                }
-            }
-
-            function changeTime(card) {
-                card.getInfo().lastPaytime = Date.now();
-            }
-
-            function changeBalance(card) {
-                card.getInfo().balance = card.getInfo().balance - DAO.state.paymentAmount;
-                card.getInfo().lastPaytime = Date.now();
-            }
-
-            function generateNewHash() {}
-
-
-            //        Проверка
-            if (checkHash()) {
-                //        Снятие средств
-                if (checkTime(card)) {
-                    changeTime(card);
-                    changed = true;
-                } else if (checkBalance(card)) {
-                    changeBalance(card);
-                    changed = true;
-                }
-            }
-
-            //generateNewHash();
-
-            if (changed) {
-                DAO.setTransaction(card.getInfo().cardID, card.getInfo().cardType).then(function (time) {
-                    Logger.info('Changed card data :');
-
-                    card.lastPaytime = new Date(time).getTime() / 1000.0;
-                    Logger.info("card.lastPaytime = " + card.lastPaytime);
-                    Logger.info(card);
-                    arduino.write(card);
-                });
-            }
-        }).catch(function (err) {
-            Logger.error(err);
-            return;
-        });
+        this.emit('cardFound', new Card(
+            getInt(cardBlocks['00'].slice(0, 4)),
+            getInt(cardBlocks['04'].slice(0, 1)),
+            getInt(cardBlocks['04'].slice(1, 1 + 6)),
+            getInt(cardBlocks['05'].slice(0, 2)),
+            getInt(cardBlocks['05'].slice(2, 2 + 3)),
+            getInt(cardBlocks['05'].slice(5, 5 + 6))), this);
     }
 };
 
 
 allSerials.init = function () {
     for (var i = 0; i < availablePorts.length; i++) {
+        Logger.info("Init " + (i+1) + "serial of Arduino");
         var serial = new SerialPort(availablePorts[i].name, {
             baudRate: 115200
         });
@@ -225,15 +126,12 @@ allSerials.init = function () {
         }).on('data', function (data) {
             for (var i = 0; i < allSerials.length; i++) {
                 if (allSerials[i].getValues().serialParser === this) {
-                    Parser.parse(data, allSerials[i].getValues().arduinoID); // second is arduino id
+                    Parser.parse(data, allSerials[i].arduinoID); // second is arduino id
                 }
             }
         });
 
-        var obj = new Arduino();
-        obj.setValues(i, serial, serialParser);
-
-        allSerials[i] = obj;
+        allSerials[i] = new Arduino(i, serial, serialParser);
     }
 
     Parser.on('cardFound', function (cardData, arduinoID) {
@@ -244,54 +142,8 @@ allSerials.init = function () {
     Parser.on('writeStatus', function (status, arduinoID) {
         allSerials[arduinoID].emit('writeStatus', status, arduinoID);
     });
+
+    Logger.info("Parser listener has set");
 }
-
-
-/*const Serial = new SerialPort('COM5', {
-    baudRate: 115200
-});*/
-
-/*const Serial = new SerialPort('/dev/ttyACM0', {
-    baudRate: 115200
-});
-
-const SerialParser = Serial.pipe(new SerialPort.parsers.Readline());*/
-
-//var Serial2 = new SerialPort("COM5", {
-//    baudrate: 115200,
-//    parser: SerialPort.parsers.Readline
-//});
-
-//var cardFromArduino1;
-
-/*SerialParser.on('open', function () {
-    Logger.info("Serial Port Opened");
-}).on('error', function (err) {
-    Logger.error("Serial Port Open Fail", err);
-}).on('data', function (data) {
-    Parser.parse(data, 1); // 1 = arduino id
-});*/
-
-/*
-// Testing
-function generatePayment() {
-    function getRandomInt(min, max) {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
-    return {
-        id: Math.random() > 0.5 ? 1 : 2,
-        card: {
-            cardID: getRandomInt(100, 1000),
-            cardType: getRandomInt(1, 8),
-            balance: getRandomInt(0, 10000),
-            expireTime: Date.now() + getRandomInt(-86400*30, 86400*30)
-        }
-    };
-}
-
-setInterval(function() {
-    arduino.emit('payment', generatePayment());
-}, 2000);
-*/
 
 module.exports = allSerials;

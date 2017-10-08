@@ -19,6 +19,7 @@ SerialParser.on('data', function (data) {
 
 var GPS = {
     processGPS: function (dbModule) {
+        Logger.debug("processGps has called");
         var distance = [],
             latlng = [],
             j, initVal = true,
@@ -28,13 +29,8 @@ var GPS = {
                 order: null
             };
 
-        if (!dbModule.isInit) {
-            Logger.info('dbModule.isInit = ' + dbModule.isInit);
-            return;
-        }
-
         if (!GPSState.lat || !GPSState.lon) {
-            Logger.info('!GPSState.lat || !GPSState.lont = true ' + Date.now());
+            Logger.debug('!GPSState.lat || !GPSState.lont = true ' + Date.now());
             return;
         }
 

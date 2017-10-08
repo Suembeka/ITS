@@ -13,8 +13,6 @@ const uuidv1 = require('uuid/v1');
 var DAO = {
     connection: null,
 
-    isInit: false,
-
     connectionOptions: {
         host: 'localhost',
         port: '/var/run/mysqld/mysqld.sock',
@@ -28,13 +26,14 @@ var DAO = {
             DAO.connection = MySQL.createConnection(DAO.connectionOptions);
 
             DAO.connection.connect(function (err) {
-                if (DAO.logError(err)) {
-                    DAO.isInit = false;
-                    resolve();
-                } else {
-                    DAO.isInit = true;
+				if(err) {
+                    Logger.error("DB connect failed");
+                    Logger.error(err);
                     reject();
-                }
+				} else {
+                    Logger.info("DB connect successful");
+                    resolve();
+				}
             });
         });
     },
@@ -49,15 +48,13 @@ var DAO = {
     },
 
     // TODO: move to controller
-    db: {},
     init: function () {
-        DAO.connect();
-        DAO.db = DAO.connection;
-        DAO.getTransportID();
-        DAO.getPaymentAmount();
-        DAO.getRouteID();
-        DAO.GPS.allStations();
-        Logger.info("Init() successful");
+        return DAO.connect()
+		.then(() => DAO.getTransportID())
+		.then(() => DAO.getPaymentAmount())
+		.then(() => DAO.getRouteID())
+        .then(() => DAO.GPS.allStations())
+        .then(() => Logger.info("Init DB successful"));
     },
 
     state: {},
@@ -116,25 +113,26 @@ var DAO = {
         });
     },
 
-    checkCircle: function (card_id, arduino) {
+    checkCircle: function (card_id) {
+        Logger.info("Checking circle...");
         return new Promise(function (resolve, reject) {
             DAO.connection.query('SELECT circle_number FROM transactions WHERE card_id = ' + card_id + ';', function (err, result) {
                 if (!DAO.logError(err)) {
                     if (result.length !== 0) {
                         if (result[0].circle_number !== DAO.GPS.circlesCount) {
-                            return resolve(arduino);
+                            return resolve();
                         } else {
                             return reject("Уже оплачено!!!...");
                         }
                     } else {
-                        return resolve(arduino);
+                        return resolve();
                     }
                 }
             });
         });
     },
 
-    setTransaction: function (cardID, cardType) {
+    startTransaction: function (cardID, cardType) {
         var pay;
         if (cardType === 0) {
             pay = DAO.state.paymentAmount;
@@ -143,6 +141,30 @@ var DAO = {
         }
 
         return new Promise(function (resolve, reject) {
+			DAO.connection.query('START TRANSACTION;', function(err, result) {
+                if(err) {
+                    Logger.error(err);
+                    return;
+                }
+
+                DAO.connection.query("INSERT INTO `transactions` (`transaction_id`,`transport_id`, `route_id`, `station_id`, `card_id`, `card_type`,   `payment_amount`, `circle_number`) VALUES ('" + uuidv1() + "', '" + DAO.state.transportID + "', '" + DAO.state.routeID + "', '" + DAO.GPS.curStation + "', '" + cardID + "', '" + cardType + "', '" + pay + "', (SELECT circles_count FROM misc));", function(err, result) {
+                    if(err) {
+                        Logger.error(err);
+                        reject();
+                        return;
+                    }
+
+                    DAO.connection.query('SELECT time FROM transactions WHERE card_id = ' + cardID + ' ORDER BY id DESC LIMIT 1;', function (err, result2) {
+                        if (!DAO.logError(err)) {
+                            return resolve(result2[0].time);
+                        } else {
+                            return reject("Запись не найдена!!!");
+                        }
+                    });
+                });
+            });
+
+			/*
             DAO.connection.query('SELECT circles_count FROM misc;', function (err, result) {
                 if (!DAO.logError(err)) {
                     DAO.connection.query("START TRANSACTION;", function (err, res) {
@@ -153,7 +175,6 @@ var DAO = {
 
                                     DAO.connection.query('SELECT time FROM transactions WHERE card_id = ' + cardID + ' ORDER BY id DESC LIMIT 1;', function (err, result2) {
                                         if (!DAO.logError(err)) {
-                                            Logger.info("result2[0].time = " + result2[0].time);
                                             return resolve(result2[0].time);
                                         } else {
                                             return reject("Запись не найдена!!!");
@@ -166,10 +187,11 @@ var DAO = {
                     });
                 }
             });
+            */
         });
     },
 
-    trCommit: function () {
+    commitTransaction: function () {
         DAO.connection.query('COMMIT;', function (err, result) {
             if (!DAO.logError(err)) {
                 Logger.info("Commited!!");
@@ -177,7 +199,7 @@ var DAO = {
         });
     },
 
-    trRollback: function () {
+    rollbackTransaction: function () {
         DAO.connection.query('ROLLBACK;', function (err, result) {
             if (!DAO.logError(err)) {
                 Logger.info("Rollbacked!!");
@@ -185,25 +207,9 @@ var DAO = {
         });
     },
 
-    confirmTransactions: function (transactions) {
-        return Promise.resolve(); // REMOVE
-
-        let lastSyncID = transactions.sort((a, b) => a - b)[0].id;
-
-        return new Promise((resolve, reject) => {
-            DAO.connection.query("UPDATE misc SET `last_sync_id` = '" + lastSyncID + "'", function (err, result) {
-                if (!DAO.logError(err)) {
-                    resolve();
-                } else {
-                    reject();
-                }
-            });
-        });
-    },
-
     GPS: {
-        curStation: 0,
-        curStationOrder: 0,
+        curStation: 1,
+        curStationOrder: 1,
         circlesCount: 0,
         stationsLatLng: null,
         checkedStations: [],
@@ -217,6 +223,7 @@ var DAO = {
         },
 
         setCurrentStation: function () {
+            Logger.info("Changing current station...");
             DAO.connection.query('UPDATE misc SET current_station_id = ' + DAO.GPS.curStation + ';', function (err) {
                 if (!DAO.logError(err)) {
                     Logger.info('Current station has changed...');

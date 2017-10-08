@@ -14,12 +14,14 @@ module.exports = function(_module) {
 			colorize: true,
 			level: 'info'
 		}),
+/*
 		new winston.transports.File({
-			filename: '../logs/' + filename + '.log',
+			filename: 'logs/' + filename + '.log',
 			level: 'warning'
 		}),
+*/
 		new winston.transports.File({
-			filename: '../logs/' + allLogsFilename + '.log',
+			filename: 'logs/' + allLogsFilename + '.log',
 			level: 'info'
 		})
 	];

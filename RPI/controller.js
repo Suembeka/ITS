@@ -27,9 +27,22 @@ class App {
         paymentAmount = val;
     }
 
-    initDB() {
-        DAO.init();
-    }
+    init() {
+		Logger.info("Init DB");
+        DAO.init().then(() => {
+			Logger.info("Init GPS");
+			setInterval(function () {
+				GPS.processGPS(DAO);
+			}, 1000);
+		});
+
+        Logger.info("Init Arduino");
+        Arduino.init();
+        for (var i = 0; i < Arduino.length; i++) {
+            Arduino[i].on('cardFound', (card, arduino) => this.checkPayment(card, arduino));
+            Arduino[i].on('writeStatus', (status, arduinoID) => this.acceptTranscation(status, arduinoID));
+        }
+	}
 
     initState() {
         // const appInitData = DAO.getAppInitData();
@@ -38,39 +51,111 @@ class App {
         // setPaymentAmount(appInitData.paymentAmount);
     }
 
-    initGPS() {
-        setInterval(function () {
-            GPS.processGPS(DAO);
-        }, 1000);
-    }
+    checkPayment(card, arduino) {
+        DAO.checkCircle(card.cardID).then(function (arduino) {
+            Logger.info('Initial card data :');
+            Logger.info(card);
 
-    initArduino() {
-        Arduino.init();
-        for (var i = 0; i < Arduino.length; i++) {
-            Arduino[i].getValues().on('cardFound', this.processPayment);
-            Arduino[i].getValues().on('writeStatus', this.acceptTranscation);
-        }
-    }
+            if(!checkHash()) {
+                return;
+            }
 
-    processPayment(card) {
-        if (Date.now() - card.getInfo().lastPaytime < 10000) {
-            Logger.info('Reject');
+            function checkHash() {
+                // Проверка на корректность хеша
+                return true;
+            }
+
+            function checkTime(card) {
+                if (card.getInfo().expireTime < Date.now()) {
+                    Logger.info("Время на карте истекло");
+                    return false;
+                } else {
+                    return true;
+                }
+            }
+
+            function checkBalance(card) {
+                Logger.info("Checking balance...");
+                if (card.balance < DAO.state.paymentAmount) {
+                    Logger.info("Недостаточно средств на карте");
+                    return false;
+                } else {
+                    return true;
+                }
+            }
+
+            function changeTime(card) {
+                Logger.info("Changing time");
+                card.lastPaytime = Date.now();
+            }
+
+            function changeBalance(card) {
+                Logger.info("Changing balance");
+                card.balance = card.getInfo().balance - DAO.state.paymentAmount;
+                card.lastPaytime = Date.now();
+            }
+
+            function generateNewHash() {
+
+            }
+
+            // Снятие средств
+            if (checkTime(card)) {
+                changeTime(card);
+                arduino.currentCard = card;
+            } else if (checkBalance(card)) {
+                Logger.info("Balance has changed");
+                changeBalance(card);
+                arduino.currentCard = card;
+            }
+
+            generateNewHash();
+
+            if(arduino.currentCard) {
+                DAO.startTransaction(card.cardID, card.cardType).then((time) => {
+                    Logger.info('Changed card data :');
+
+                    card.lastPaytime = new Date(time).getTime() / 1000.0;
+                    //Logger.info("card.lastPaytime = " + card.lastPaytime);
+                    Logger.info(card);
+                    arduino.write(card);
+                });
+            }
+
+            /*Logger.info("Изменение данных...");
+		var myDate="26-10-2017";
+		myDate=myDate.split("-");
+		var newDate=myDate[1]+","+myDate[0]+","+myDate[2];
+
+	            card = {
+	                cardType: 1,
+	                balance: 0,
+	                expireTime: (new Date(newDate).getTime()),
+	                lastTransportID: 255,
+	                lastPaytime: Date.now()
+	            };
+	            arduino.write(card, 1);*/
+
+        }).catch(function (err) {
+            Logger.error(err);
             return;
-        }
+        });
     }
 
-    acceptTranscation(paymentStatus) {
-        //paymentStatus = true or false
+    acceptTranscation(status, arduinoID) {
+        if(status) {
+            DAO.commitTransaction();
+        } else {
+            DAO.rollbackTransaction();
+        }
+
     }
 };
 
-const app = new App();
-app.initDB();
-app.initState();
-app.initGPS();
-app.initArduino();
+new App().init();
+
 
 process.on('unhandledRejection', (reason, p) => {
     Logger.info('Unhandled Rejection at: Promise', p, 'reason:', reason);
-    DAO.trRollback();
+    //DAO.rollbackTransaction();
 });
