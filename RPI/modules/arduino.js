@@ -46,12 +46,18 @@ var availablePorts = shell.ls('-l', '/dev/ttyACM*');
 var allSerials = [];
 
 class Arduino extends EventEmitter {
-    constructor(arduinoID, serial, serialParser) {
+    setValues(arduinoID, serial, serialParser) {
         this.arduinoID = arduinoID;
         this.serial = serial;
         this.serialParser = serialParser;
-        this.currentCard = null;
     }
+
+    /*constructor(arduinoId, serial, serialParser) {
+        this.arduinoID = arduinoId;
+        this.serial = serial;
+        this.serialParser = serialParser;
+        this.currentCard = null;
+    }*/
 
     write(card) {
         function getHex(decimal, sizeInBytes) {
@@ -112,7 +118,7 @@ class Arduino extends EventEmitter {
 
 allSerials.init = function () {
     for (var i = 0; i < availablePorts.length; i++) {
-        Logger.info("Init " + (i+1) + "serial of Arduino");
+        Logger.info("Init " + (i + 1) + "serial of Arduino");
         var serial = new SerialPort(availablePorts[i].name, {
             baudRate: 115200
         });
@@ -120,18 +126,22 @@ allSerials.init = function () {
         var serialParser = serial.pipe(new SerialPort.parsers.Readline());
 
         serialParser.on('open', function () {
-            Logger.info("Serial Port Opened");
+            Logger.info("Serial Port has been opened");
         }).on('error', function (err) {
-            Logger.error("Serial Port Open Fail", err);
+            Logger.error("Serial Port has been failed when it opened", err);
         }).on('data', function (data) {
             for (var i = 0; i < allSerials.length; i++) {
-                if (allSerials[i].getValues().serialParser === this) {
+                if (allSerials[i].serialParser === this) {
                     Parser.parse(data, allSerials[i].arduinoID); // second is arduino id
                 }
             }
         });
 
-        allSerials[i] = new Arduino(i, serial, serialParser);
+        //allSerials[i] = new Arduino(i, serial, serialParser);
+
+        var obj = new Arduino();
+        obj.setValues(i, serial, serialParser);
+        allSerials[i] = obj;
     }
 
     Parser.on('cardFound', function (cardData, arduinoID) {
@@ -143,7 +153,7 @@ allSerials.init = function () {
         allSerials[arduinoID].emit('writeStatus', status, arduinoID);
     });
 
-    Logger.info("Parser listener has set");
+    Logger.info("Parser listener has been set");
 }
 
 module.exports = allSerials;

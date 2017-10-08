@@ -9,6 +9,4 @@ class Card {
     }
 };
 
-module.exports = function() {
-    return new Card.apply(null, arguments);
-};
+module.exports = Card;

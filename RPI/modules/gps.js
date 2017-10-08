@@ -19,7 +19,7 @@ SerialParser.on('data', function (data) {
 
 var GPS = {
     processGPS: function (dbModule) {
-        Logger.debug("processGps has called");
+        Logger.debug("processGps has been called");
         var distance = [],
             latlng = [],
             j, initVal = true,

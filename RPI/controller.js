@@ -28,13 +28,13 @@ class App {
     }
 
     init() {
-		Logger.info("Init DB");
+        Logger.info("Init DB");
         DAO.init().then(() => {
-			Logger.info("Init GPS");
-			setInterval(function () {
-				GPS.processGPS(DAO);
-			}, 1000);
-		});
+            Logger.info("Init GPS");
+            setInterval(function () {
+                GPS.processGPS(DAO);
+            }, 1000);
+        });
 
         Logger.info("Init Arduino");
         Arduino.init();
@@ -42,7 +42,7 @@ class App {
             Arduino[i].on('cardFound', (card, arduino) => this.checkPayment(card, arduino));
             Arduino[i].on('writeStatus', (status, arduinoID) => this.acceptTranscation(status, arduinoID));
         }
-	}
+    }
 
     initState() {
         // const appInitData = DAO.getAppInitData();
@@ -52,11 +52,12 @@ class App {
     }
 
     checkPayment(card, arduino) {
-        DAO.checkCircle(card.cardID).then(function (arduino) {
+        Logger.info("checkPayment has been called");
+        DAO.checkCircle(card.cardID, arduino).then(function (arduino) {
             Logger.info('Initial card data :');
             Logger.info(card);
 
-            if(!checkHash()) {
+            if (!checkHash()) {
                 return;
             }
 
@@ -66,7 +67,7 @@ class App {
             }
 
             function checkTime(card) {
-                if (card.getInfo().expireTime < Date.now()) {
+                if (card.expireTime < Date.now()) {
                     Logger.info("Время на карте истекло");
                     return false;
                 } else {
@@ -91,7 +92,7 @@ class App {
 
             function changeBalance(card) {
                 Logger.info("Changing balance");
-                card.balance = card.getInfo().balance - DAO.state.paymentAmount;
+                card.balance = card.balance - DAO.state.paymentAmount;
                 card.lastPaytime = Date.now();
             }
 
@@ -104,14 +105,14 @@ class App {
                 changeTime(card);
                 arduino.currentCard = card;
             } else if (checkBalance(card)) {
-                Logger.info("Balance has changed");
+                Logger.info("Balance has been changed");
                 changeBalance(card);
                 arduino.currentCard = card;
             }
 
             generateNewHash();
 
-            if(arduino.currentCard) {
+            if (arduino.currentCard) {
                 DAO.startTransaction(card.cardID, card.cardType).then((time) => {
                     Logger.info('Changed card data :');
 
@@ -143,12 +144,11 @@ class App {
     }
 
     acceptTranscation(status, arduinoID) {
-        if(status) {
+        if (status) {
             DAO.commitTransaction();
         } else {
             DAO.rollbackTransaction();
         }
-
     }
 };
 
