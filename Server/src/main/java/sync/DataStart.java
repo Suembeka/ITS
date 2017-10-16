@@ -6,14 +6,18 @@
 package sync;
 
 
+
 /**
  *
  * @author ksinn
  */
-public class QueryData extends Data{
+public class DataStart extends Data{
+    
     protected int transportId;
     
+    public DataStart(){}
+    
     public int getTrabsportId(){ return  transportId; }
-    public void setTrabsportId(int transportId){ this.transportId = transportId; }
+    public void setTransportId(int transportId){ this.transportId = transportId; }
     
 }

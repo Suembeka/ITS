@@ -6,6 +6,7 @@
 package entity;
 
 import hibernate.Factory;
+import java.io.Serializable;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
@@ -18,7 +19,7 @@ import org.apache.log4j.Logger;
  *
  * @author ksinn
  */
-public class Route {
+public class Route implements Serializable{
     
     private int id;
     @NotNull

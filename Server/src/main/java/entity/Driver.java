@@ -5,6 +5,7 @@
  */
 package entity;
 
+import java.io.Serializable;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
@@ -13,7 +14,7 @@ import javax.validation.constraints.Size;
  *
  * @author ksinn
  */
-public class Driver {
+public class Driver implements Serializable{
     
     private int id;
     

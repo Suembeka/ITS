@@ -6,6 +6,7 @@
 package entity;
 
 
+import java.io.Serializable;
 import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
@@ -16,7 +17,7 @@ import org.apache.log4j.Logger;
  *
  * @author ksinn
  */
-public class Transport {
+public class Transport implements Serializable{
     
     private int id;
     @NotNull

@@ -7,13 +7,18 @@ package sync;
 
 
 
+
 /**
  *
  * @author ksinn
  */
-public class StatusData extends Data{
+public class DataStatus extends Data{
     protected int code;
     protected String errorMessage;
+    
+    {
+        errorMessage = "";
+    }
     
     public int getCode(){ return code; }
     public String getErrorMessage(){ return errorMessage; }

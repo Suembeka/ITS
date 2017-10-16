@@ -5,6 +5,7 @@
  */
 package entity;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 import javax.validation.constraints.NotNull;
 
@@ -12,7 +13,7 @@ import javax.validation.constraints.NotNull;
  *
  * @author ksinn
  */
-public abstract class TransportAssociation {
+public abstract class TransportAssociation implements Serializable{
     private int id;
     @NotNull
     private Timestamp time;

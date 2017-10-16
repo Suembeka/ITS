@@ -5,14 +5,14 @@
  */
 package entity;
 
-import java.sql.Timestamp;
+import java.io.Serializable;
 import javax.validation.constraints.NotNull;
 
 /**
  *
  * @author ksinn
  */
-public class DriverAssociation extends TransportAssociation{
+public class DriverAssociation extends TransportAssociation implements Serializable{
     
     @NotNull
     private Driver driver;

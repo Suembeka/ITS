@@ -6,16 +6,15 @@
 package sync;
 
 
+
 /**
  *
  * @author ksinn
  */
-public class AcceptData extends Data{
+public class DataAccept extends Data{
     protected int lastTransactionId;
-
-    AcceptData() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
+    
+    public DataAccept(){}    
     
     public int getLastTransactionId(){ return  lastTransactionId; }
     public void setLastTransactionId(int lastTransactionId){ this.lastTransactionId=lastTransactionId; }

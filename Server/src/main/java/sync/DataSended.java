@@ -6,16 +6,24 @@
 package sync;
 
 import entity.Transaction;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  *
  * @author ksinn
  */
-public class SyncData extends Data{
+public class DataSended extends Data{
+    
     protected List<Transaction> transactions;
     
+    {
+        transactions = new ArrayList();
+    }
+    
+    public DataSended(){}
+    
     public List getTransactions() { return transactions; }
-    public void setTransactions(List transactions) { this.transactions=transactions; }
+    public void setTransactions(List transactions) { this.transactions = transactions==null?this.transactions:transactions; }
 
 }

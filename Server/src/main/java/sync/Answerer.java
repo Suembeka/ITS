@@ -11,6 +11,6 @@ package sync;
  */
 public interface Answerer {
     public boolean canAnswer(Message message);
-    public Message answer(Message message);
+    public Message answer(Message message) throws Exception;
     
 }

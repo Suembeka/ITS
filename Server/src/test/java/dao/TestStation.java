@@ -1,3 +1,5 @@
+package dao;
+
 
 import entity.*;
 import hibernate.Factory;

@@ -5,6 +5,7 @@
  */
 package entity;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 import javax.validation.constraints.NotNull;
@@ -16,7 +17,7 @@ import org.apache.log4j.Logger;
  *
  * @author ksinn
  */
-public class Station {
+public class Station implements Serializable{
     private int id;
     @NotNull
     @Size(min=1, max=255, message="Name must be between 1 and 255 characters long.")

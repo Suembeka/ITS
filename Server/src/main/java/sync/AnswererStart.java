@@ -8,47 +8,47 @@ package sync;
 import entity.Transaction;
 import entity.Transport;
 import hibernate.Factory;
-import java.sql.SQLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import static sync.Message.MessageTypes.start_sync;
+import static sync.SyncSession.State.opened;
 
 /**
  *
  * @author ksinn
  */
-public class StartAnswerer implements Answerer{
+public class AnswererStart implements Answerer{
+    
+    private static final org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(Answerer.class.getName());
 
     @Override
     public boolean canAnswer(Message message) {
-        return message.getType().equals(start_sync);
+        return message.getType().equals(start_sync)
+                &&message.getSession().getCurrentState()==opened;
     }
 
     @Override
-    public Message answer(Message message) {
+    public Message answer(Message message) throws Exception{
         Message answer;
         try {
             
-            QueryData data = (QueryData) message.getData();
+            DataStart data = (DataStart) message.getData();
             Transport transport = (Transport) Factory.getInstance().getEntityDAO().getById(Transport.class, data.getTrabsportId());
             if(transport!=null){
                 answer = new Message(Message.MessageTypes.accept_sync);
                 Transaction transaction = Factory.getInstance().getTransactionDAO().getLastForTransportId(transport.getId());
                 if(transaction!=null){
-                    ((AcceptData)answer.getData()).setLastTransactionId(transaction.getId().getId());
+                    ((DataAccept)answer.getData()).setLastTransactionId(transaction.getId().getId());
                 } else {
-                    ((AcceptData)answer.getData()).setLastTransactionId(0);
+                    ((DataAccept)answer.getData()).setLastTransactionId(0);
                 }
             } else {
                 answer = new Message(Message.MessageTypes.sync_status);
-                ((StatusData)answer.getData()).setCode(500);
-                ((StatusData)answer.getData()).setErrorMessage("Unknown transport id!");
+                ((DataStatus)answer.getData()).setCode(400);
+                ((DataStatus)answer.getData()).setErrorMessage("Unknown transport id!");
             }
             return answer;
-        } catch (SQLException ex) {
-            Logger.getLogger(StartAnswerer.class.getName()).log(Level.SEVERE, null, ex);
         } catch (Exception ex) {
-            Logger.getLogger(StartAnswerer.class.getName()).log(Level.SEVERE, null, ex);
+            log.error("StartAnswerer error!", ex);
+            throw ex;
         }
     }
     

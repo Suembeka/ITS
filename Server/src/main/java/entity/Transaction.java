@@ -38,6 +38,10 @@ public class Transaction implements Serializable{
     
     private static final Logger log = Logger.getLogger(Transaction.class.getName());
     
+    {
+        id = new TransactionId();
+    }
+    
     public  TransactionId getId(){ return this.id; }
     public  UUID getTransactionId(){ return this.transactionId; }
     public  byte[] getBinaryTransactionId(){ 
@@ -53,7 +57,7 @@ public class Transaction implements Serializable{
     public  int getCardId(){ return this.cardId; }
     public  int getCardType(){ return this.cardType; }
     public  int getPaymentAmount(){ return this.paymentAmount; }
-    public void setId( TransactionId id){ this.id = id; }
+    public void setId( TransactionId id){ this.id = id==null?this.id:id; }
     public void setTransactionId( UUID transactionId){ this.transactionId = transactionId; }
     public void setBinaryTransactionId( byte[] transactionId){ 
         ByteBuffer bb = ByteBuffer.wrap(transactionId);

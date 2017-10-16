@@ -5,6 +5,7 @@
  */
 package entity;
 
+import java.io.Serializable;
 import javax.validation.constraints.NotNull;
 import org.apache.log4j.Logger;
 
@@ -12,7 +13,7 @@ import org.apache.log4j.Logger;
  *
  * @author ksinn
  */
-public class StationAssociation {
+public class StationAssociation implements Serializable{
     
     private int id;
     @NotNull

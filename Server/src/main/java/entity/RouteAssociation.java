@@ -5,14 +5,14 @@
  */
 package entity;
 
-import java.sql.Timestamp;
+import java.io.Serializable;
 import javax.validation.constraints.NotNull;
 
 /**
  *
  * @author ksinn
  */
-public class RouteAssociation extends TransportAssociation{
+public class RouteAssociation extends TransportAssociation implements Serializable{
     
     
     @NotNull
