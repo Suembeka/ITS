@@ -1,0 +1,27 @@
+{
+  "name": "rpi",
+  "version": "0.0.1",
+  "description": "ITS Project RPI Component",
+  "main": "controller.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Suembeka/ITS.git"
+  },
+  "author": "ITS Project Team",
+  "license": "GPL-2.0",
+  "bugs": {
+    "url": "https://github.com/Suembeka/ITS/issues"
+  },
+  "homepage": "https://github.com/Suembeka/ITS#readme",
+  "dependencies": {
+    "gps": "^0.4.0",
+    "mysql": "^2.14.1",
+    "node-datetime": "^2.0.0",
+    "request": "^2.81.0",
+    "serialport": "^5.0.0",
+    "winston": "^2.3.1"
+  }
+}

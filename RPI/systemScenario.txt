@@ -1,0 +1,59 @@
+init.js
+    system init
+        -> initController [controller.js]
+        -> initSync [sync.js]
+
+
+controller.js
+    initController
+        -> dbConnect [dao.js]
+        -> initGPS [controller.js]
+        -> initArduino [controller.js]
+
+    initGPS
+        -> processGps [gps.js]
+
+    initArduino
+        -> serialsInit [arduino.js]
+
+dao.js
+    dbConnect [dao.js]
+        -> connect {mysql}
+    setCurrentStation [dao.js]
+        -> query {mysql}
+    getTransactions
+        -> query {mysql}
+
+
+gps.js
+    processGps
+        -> @setCurrentStation [dao.js]
+
+
+arduino.js
+    serialsInit
+        -> serialportInit {serialport}
+    
+    #processCard
+        -> ???
+
+
+logger.js
+    info
+        -> log {winston}
+
+sync.js
+    prepareSync
+        -> checkConnection [net.js]
+        -> getTransactions [dao.js]
+        -> @sendRequest [net.js]
+        -> @sync [sync.js]
+        -> @saveLastSync [sync.js]
+    
+    sync
+        -> sendRequest [net.js]
+
+
+net.js
+    sendRequest
+        -> request {request}
