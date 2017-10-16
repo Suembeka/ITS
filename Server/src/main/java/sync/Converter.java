@@ -26,19 +26,19 @@ import static sync.Message.MessageTypes.*;
 
 public class Converter {
 
-    public static JSONObject toJSON(Message mes) throws Exception {
+    public static JSONObject toJSON(Message mess) throws Exception {
         JSONObject json = new JSONObject();
-        json.append("type", mes.getType());
+        json.put("type", mess.getType());
         JSONObject data = new JSONObject();
         
-        switch (mes.getType()) {
+        switch (mess.getType()) {
             case accept_sync: {
-                DataAccept d = (DataAccept) mes.getData();
+                DataAccept d = (DataAccept) mess.getData();
                 data.put("last_tranaction_id", d.getLastTransactionId());
                 break;
             }
             case sync_status: {
-                DataStatus d = (DataStatus) mes.getData();
+                DataStatus d = (DataStatus) mess.getData();
                 data.put("staus", d.getCode());
                 data.put("err", d.getErrorMessage());
                 break;
@@ -48,7 +48,7 @@ public class Converter {
             }
         }
         
-        json.append("data", data);
+        json.put("data", data);
         return json;
     }
 

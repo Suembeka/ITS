@@ -5,15 +5,10 @@
  */
 package sync;
 
-import entity.Transaction;
-import entity.Transport;
 import hibernate.Factory;
 import java.sql.SQLException;
-import java.util.List;
 import static sync.Message.MessageTypes.send_data;
 import static sync.Message.MessageTypes.sync_status;
-import static sync.SyncSession.State.send_last_id;
-import static sync.SyncSession.State.send_sync_status;
 import static sync.SyncSession.State.take_data;
 
 /**

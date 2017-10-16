@@ -5,12 +5,9 @@
  */
 package web;
 
-import hibernate.HibernateUtil;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -21,6 +18,7 @@ import sync.AnswererSync;
 import sync.Converter;
 import sync.Message;
 import sync.SyncService;
+import sync.SyncSession;
 
 /**
  *
@@ -32,7 +30,6 @@ public class SyncServlet extends HttpServlet {
     static SyncService syncService = new SyncService();
     {
         syncService.setAnswerer(new AnswererStart());
-        //Rclient, rest client
         syncService.setAnswerer(new AnswererSync());
     }
     
@@ -54,12 +51,17 @@ public class SyncServlet extends HttpServlet {
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        response.setContentType("text/html;charset=UTF-8");
+        response.setContentType("application/json;charset=UTF-8");
         try (PrintWriter out = response.getWriter()) {
             try {
                 Message mes = Converter.toJavaObject(parseRequest(request));
+                SyncSession ses = (SyncSession) request.getSession().getAttribute("syncSession");
+                if(ses!=null){
+                    mes.setSession(ses);
+                }
                 Message answer = syncService.answer(mes);
-                JSONObject toJSON = Converter.toJSON(mes);
+                request.getSession().setAttribute("syncSession", answer.getSession());
+                JSONObject toJSON = Converter.toJSON(answer);
                 response.getWriter().print(toJSON.toString());
             } catch (Exception ex) {
                 log.error(null, ex);
