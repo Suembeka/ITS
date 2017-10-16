@@ -50,6 +50,7 @@ class Arduino extends EventEmitter {
         this.arduinoID = arduinoID;
         this.serial = serial;
         this.serialParser = serialParser;
+        this.currentCard = null;
     }
 
     /*constructor(arduinoId, serial, serialParser) {

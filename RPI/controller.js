@@ -144,6 +144,7 @@ class App {
     }
 
     acceptTranscation(status, arduinoID) {
+        Arduino[arduinoID].currentCard = null;
         if (status) {
             DAO.commitTransaction();
         } else {
