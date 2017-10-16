@@ -1,4 +1,4 @@
-# ITS Project
+# Project
 
 ## Documentation / Документация
 
