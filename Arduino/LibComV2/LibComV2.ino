@@ -16,20 +16,13 @@ enum STATE : uint8_t {
   WAITING_RESPONSE,
   READING_RESPONSE,
   WRITING_CARD,
-  REPORTING_RESULT,
-  SHOWING_ERROR
-};
-
-// Packets coming from RPI
-enum PACKET : uint8_t {
-  START,
-  END,
-  BLOCK_WRITE,
-  SHOW_ERROR 
+  REPORTING_RESULT
 };
 
 // Errors
-enum SHOW_ERROR : uint8_t {
+enum NOTICE_TYPE : uint8_t {
+  SUCCESS,
+  CARD_INVALID,
   NOT_ENOUGH_MONEY,
   CARD_EXPIRED
 };
@@ -185,6 +178,7 @@ namespace LibNotify {
     LibTime::setTimeout(&LibNotify::notifyOff, 1000);
   }
 };
+//==============================================================================
 namespace LibSerial {
   namespace Buffer {
     uint8_t buffer[40] = {0};
@@ -272,10 +266,21 @@ namespace LibSerial {
     Buffer::clear();
   }
 
-   void parseError () {
+  void parseNotifyMsg () {
+    // Fetch msg code
+    uint8_t msgCodeStr[3];
+    msgCodeStr[2] = '\0';
+    memcpy(msgCodeStr, Buffer::getBuffer() + 2, 2);
+    uint8_t msgCode = strtol(msgCodeStr, nullptr, 10);
 
-    // TODO: Notify when error
-
+    switch(msgCode){
+    case NOTICE_TYPE::SUCCESS: LibNotify::notifySuccess(); break;
+    case NOTICE_TYPE::CARD_INVALID:
+    case NOTICE_TYPE::NOT_ENOUGH_MONEY:
+    case NOTICE_TYPE::CARD_EXPIRED: LibNotify::notifyError(); break;
+    }
+    
+    LibState::set(STATE::WAITING_CARD);
   }
 
   void readSerial() {
@@ -297,8 +302,8 @@ namespace LibSerial {
         Packet::end();
         LibState::set(STATE::WRITING_CARD);
         break;
-      case 'F':
-        parseError();
+      case 'M':
+        parseNotifyMsg();
         break;
       default:
         break;
@@ -555,7 +560,6 @@ void loop() {
   case STATE::WAITING_RESPONSE:
   case STATE::READING_RESPONSE: LibSerial::listenSerial(); break;
   case STATE::WRITING_CARD:     LibNFC::writeDataOnCard(); break;
-  case STATE::SHOWING_ERROR:    LibNotify::notifyError(); break;
   case STATE::REPORTING_RESULT: LibCom::reportWriteStatus(); break;
   default: break;
   }
