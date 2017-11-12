@@ -6,9 +6,8 @@ const Logger = require('./modules/logger.js')(module);
 
 class Sync {
     constructor() {
-        this.state = {
-            transportID: null
-        };
+        this.state = {};
+		this.state.transportID = null;
     }
 
     async init() {
@@ -19,10 +18,13 @@ class Sync {
         this.state.transportID = await DAO.getTransportID();
 
         // Init repeatable sync
-        //this.timer = setTimeout(prepareSyncData, 60 * 1000);
+        //this.timer = setTimeout(() => this.prepareSyncData, 60 * 1000 * 0);
+		this.prepareSyncData();
     }
 
     async prepareSyncData() {
+		Logger.info("Prepare sync");
+
         // Check internet connection
         let connectionExist = await Net.checkConnection();
         if(!connectionExist) { return; }
@@ -33,19 +35,34 @@ class Sync {
         let transactions = await DAO.getTransactions();
         if(transactions.length == 0) { return; }
 
+		transactions = transactions.map(function(tr) {
+			return Object.assign({}, tr);
+		});
+
         // Start sync
-        let response = await Net.sendRequest({
-            'type': 'start_sync',
-            'data': { 'transport_id': transportID }
-        });
+		Logger.info("Start sync");
+
+		let response = await Net.sendRequest({
+			'type': 'start_sync',
+			'data': { 'transport_id': transportID }
+		});
+
+		Logger.info('Response:' + JSON.stringify(response));
 
         if(response.type == 'accept_sync') {
             // Get last transaction id that was sent
             let lastSyncID = response.data.last_transaction_id;
             transactions = transactions.filter((tr) => tr.id > lastSyncID);
+			transactions = transactions.map((tr) => {
+				tr.transaction_id = tr.transaction_id.toString();
+				return tr;
+			});
+
+			console.log(transactions);
 
             // Send transactions to server
             let success = await this.sync(transactions);
+
             if(success) {
                 await DAO.saveLastSyncID(lastSyncID);
             }
@@ -53,6 +70,7 @@ class Sync {
     }
 
     async sync(transactions) {
+		Logger.info("Send data");
         let response = await Net.sendRequest({
             'type': 'send_data',
             'data': {
@@ -60,12 +78,14 @@ class Sync {
             }
         });
 
+		Logger.info('Response:' + JSON.stringify(response));
+
         if(response.type == 'sync_status') {
             if(response.data.status == 200) {
-                return Promise.resolve();
+                return true;
             }
             else if(response.data.status == 500) {
-                return Promise.reject();
+                return false;
             }
         }
     }
