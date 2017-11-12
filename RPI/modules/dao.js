@@ -15,11 +15,18 @@ var DAO = {
 
     connectionOptions: {
         host: 'localhost',
-        port: '/var/run/mysqld/mysqld.sock',
-        user: 'rpibus',
-        password: '12345678qwerty',
+        port: '3306',
+        user: 'suembeka',
+        password: '123mdk5',
         database: 'its_rpi'
     },
+//    connectionOptions: {
+//        host: 'localhost',
+//        port: '/var/run/mysqld/mysqld.sock',
+//        user: 'rpibus',
+//        password: '12345678qwerty',
+//        database: 'its_rpi'
+//    },
 
     connect: function () {
         return new Promise((resolve, reject) => {
@@ -74,7 +81,8 @@ var DAO = {
 
     getTransactions: function () {
         return new Promise((resolve, reject) => {
-            DAO.connection.query('SELECT * FROM transactions WHERE id=(SELECT last_sync_id FROM misc) ORDER BY id LIMIT 10', function (err, result) {
+            //DAO.connection.query('SELECT * FROM transactions WHERE id>(SELECT last_sync_id FROM misc) ORDER BY id LIMIT 10', function (err, result) {
+            DAO.connection.query('SELECT * FROM transactions ORDER BY id LIMIT 10', function (err, result) {
                 if (!DAO.logError(err)) {
                     resolve(result);
                 } else {
