@@ -4,7 +4,8 @@ const Request = require('request');
 
 class Net {
     constructor() {
-        this.apiURL = 'http://its.loc/';
+        //this.apiURL = 'http://its.loc/';
+        this.apiURL = 'http://192.168.43.232:8088/ITS/sync';
     }
 
     sendRequest(jsonPackage) {
@@ -12,12 +13,13 @@ class Net {
             Request({
                 method: 'POST',
                 uri: this.apiURL,
-                form: jsonPackage,
-                timeout: 5000,
-                headers: {},
-                json: true
+                json: jsonPackage,
+                //timeout: 50000,
+                headers: {
+					'Connection': 'keep-alive'
+				}
             }, (err, response, body) => {
-                if(err) { reject(); } // Error message
+                if(err) { reject(err); } // Error message
                 if (response.statusCode == 200) {
                     resolve(body);
                 }
