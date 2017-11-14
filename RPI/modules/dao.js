@@ -82,7 +82,7 @@ var DAO = {
     getTransactions: function () {
         return new Promise((resolve, reject) => {
             //DAO.connection.query('SELECT * FROM transactions WHERE id>(SELECT last_sync_id FROM misc) ORDER BY id LIMIT 10', function (err, result) {
-            DAO.connection.query('SELECT * FROM transactions ORDER BY id LIMIT 10', function (err, result) {
+            DAO.connection.query('SELECT `id`, `transaction_id`, `time`, `transport_id`, `route_id`, `station_id`, `card_id`, `card_type`, `payment_amount`, `circle_number` FROM transactions WHERE id>(SELECT last_sync_id FROM misc) ORDER BY id LIMIT 10', function (err, result) {
                 if (!DAO.logError(err)) {
                     resolve(result);
                 } else {

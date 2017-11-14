@@ -36,32 +36,40 @@ class Sync {
         if(transactions.length == 0) { return; }
 
 		transactions = transactions.map(function(tr) {
+			let transac = tr.transaction_id.toString('hex');
+			tr.transaction_id = [transac.substr(0, 8), transac.substr(8, 4), transac.substr(12, 4), transac.substr(16, 4), transac.substr(20, 4)].join("-");
+			
+			tr.time = new Date(tr.time).getTime();
+			
 			return Object.assign({}, tr);
 		});
-
+		
+		console.log(transactions);
+		//return;
+		
         // Start sync
 		Logger.info("Start sync");
-
 		let response = await Net.sendRequest({
 			'type': 'start_sync',
 			'data': { 'transport_id': transportID }
 		});
 
-		Logger.info('Response:' + JSON.stringify(response));
+		Logger.info('Start sync Response:' + JSON.stringify(response));
 
         if(response.type == 'accept_sync') {
             // Get last transaction id that was sent
-            let lastSyncID = response.data.last_transaction_id;
-            transactions = transactions.filter((tr) => tr.id > lastSyncID);
-			transactions = transactions.map((tr) => {
-				tr.transaction_id = tr.transaction_id.toString();
-				return tr;
-			});
-
+            let serverLastSyncID = response.data.last_transaction_id;
+            transactions = transactions.filter((tr) => tr.id > serverLastSyncID);
+			let lastSyncID = transactions[transactions.length-1].id;
+			
+			console.log(serverLastSyncID, lastSyncID, '\n');
+			
 			console.log(transactions);
 
             // Send transactions to server
             let success = await this.sync(transactions);
+			
+			Logger.info('Success:' + success);
 
             if(success) {
                 await DAO.saveLastSyncID(lastSyncID);
@@ -74,18 +82,18 @@ class Sync {
         let response = await Net.sendRequest({
             'type': 'send_data',
             'data': {
-                'transactions': JSON.stringify(transactions)
+                'transactions': transactions
             }
         });
 
-		Logger.info('Response:' + JSON.stringify(response));
+		Logger.info('Sync Response:' + JSON.stringify(response));
 
         if(response.type == 'sync_status') {
             if(response.data.status == 200) {
-                return true;
+                return Promise.resolve();
             }
             else if(response.data.status == 500) {
-                return false;
+                return Promise.reject();
             }
         }
     }
