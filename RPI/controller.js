@@ -4,6 +4,7 @@ const DAO = require('./modules/dao.js');
 const Logger = require('./modules/logger.js')(module);
 const GPS = require('./modules/gps.js');
 const Arduino = require('./modules/arduino.js');
+const Notifier = require("./modules/notifier.js");
 
 class App {
     getCurrentStation() {
@@ -121,6 +122,8 @@ class App {
                     Logger.info(card);
                     arduino.write(card);
                 });
+            } else {
+                Notifier.notify(arduino, '3');
             }
 
             /*Logger.info("Изменение данных...");
@@ -147,8 +150,10 @@ class App {
         Arduino[arduinoID].currentCard = null;
         if (status) {
             DAO.commitTransaction();
+            Notifier.notify(Arduino[arduinoID], '0');
         } else {
             DAO.rollbackTransaction();
+            Notifier.notify(Arduino[arduinoID], '3');
         }
     }
 };
