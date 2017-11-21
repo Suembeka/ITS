@@ -24,7 +24,8 @@ enum NOTICE_TYPE : uint8_t {
   SUCCESS,
   CARD_INVALID,
   NOT_ENOUGH_MONEY,
-  CARD_EXPIRED
+  CARD_EXPIRED,
+  ALREADY_PAID
 };
 
 // Block structure on card
@@ -164,8 +165,14 @@ namespace LibTime {
 //==============================================================================
 namespace LibNotify {
   void notifyOff() {
+    digitalWrite(4, LOW);
     digitalWrite(5, LOW);
     digitalWrite(6, LOW);
+  }
+  void notifyBefore () {
+    pinMode(4, OUTPUT);
+    digitalWrite(4, HIGH);
+    LibTime::setTimeout(&LibNotify::notifyOff, 1000);
   }
   void notifyError () {
     pinMode(5, OUTPUT);
@@ -268,16 +275,17 @@ namespace LibSerial {
 
   void parseNotifyMsg () {
     // Fetch msg code
-    uint8_t msgCodeStr[3];
+    uint8_t msgCodeStr[4];
     msgCodeStr[2] = '\0';
     memcpy(msgCodeStr, Buffer::getBuffer() + 2, 2);
     uint8_t msgCode = strtol(msgCodeStr, nullptr, 10);
 
     switch(msgCode){
-    case NOTICE_TYPE::SUCCESS: LibNotify::notifySuccess(); break;
-    case NOTICE_TYPE::CARD_INVALID:
-    case NOTICE_TYPE::NOT_ENOUGH_MONEY:
-    case NOTICE_TYPE::CARD_EXPIRED: LibNotify::notifyError(); break;
+      case NOTICE_TYPE::SUCCESS: LibNotify::notifySuccess(); break;         //M0
+      case NOTICE_TYPE::CARD_INVALID: LibNotify::notifyError(); break;      //M1
+      case NOTICE_TYPE::NOT_ENOUGH_MONEY: LibNotify::notifyError(); break;  //M2
+      case NOTICE_TYPE::CARD_EXPIRED: {LibNotify::notifyError(); LibNotify::notifySuccess(); break;}    //M3
+      case NOTICE_TYPE::ALREADY_PAID: LibNotify::notifyBefore(); break;     //M4
     }
     
     LibState::set(STATE::WAITING_CARD);
