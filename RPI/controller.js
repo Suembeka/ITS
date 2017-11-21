@@ -105,6 +105,7 @@ class App {
             if (checkTime(card)) {
                 changeTime(card);
                 arduino.currentCard = card;
+                Notifier.notify(arduino, '3');
             } else if (checkBalance(card)) {
                 Logger.info("Balance has been changed");
                 changeBalance(card);
@@ -123,7 +124,7 @@ class App {
                     arduino.write(card);
                 });
             } else {
-                Notifier.notify(arduino, '3');
+                Notifier.notify(arduino, '2');
             }
 
             /*Logger.info("Изменение данных...");
@@ -142,6 +143,7 @@ class App {
 
         }).catch(function (err) {
             Logger.error(err);
+            Notifier.notify(arduino, '4');
             return;
         });
     }
@@ -153,7 +155,7 @@ class App {
             Notifier.notify(Arduino[arduinoID], '0');
         } else {
             DAO.rollbackTransaction();
-            Notifier.notify(Arduino[arduinoID], '3');
+            Notifier.notify(Arduino[arduinoID], '1');
         }
     }
 };
