@@ -22,6 +22,7 @@
     "node-datetime": "^2.0.0",
     "request": "^2.81.0",
     "serialport": "^5.0.0",
+    "shelljs": "^0.7.8",
     "winston": "^2.3.1"
   }
 }
