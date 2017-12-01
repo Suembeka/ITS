@@ -5,10 +5,10 @@
         driverClassName="com.mysql.jdbc.Driver" 
         factory="org.apache.tomcat.jdbc.pool.DataSourceFactory"
         type="javax.sql.DataSource" 
-        url="jdbc:mysql://localhost:3306/its?useUnicode=true&amp;characterEncoding=UTF-8"
+        url="jdbc:mysql://localhost:3306/its?useUnicode=true&amp;serverTimezone=UTC&amp;characterEncoding=UTF-8"
 
         password="qwerty"  
-        username="root"
+        username="user"
         maxActive="10" maxAge="10000" removeAbandoned="true" scope="Shareable"  
     />
 </Context>
