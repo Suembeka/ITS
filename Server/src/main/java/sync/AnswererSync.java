@@ -21,8 +21,8 @@ public class AnswererSync implements Answerer{
 
     @Override
     public boolean canAnswer(Message message) {
-        return message.getType().equals(send_data)
-                &&message.getSession().getCurrentState()==take_data;
+        return message.getType().equals(send_data);
+                //&&message.getSession().getCurrentState()==take_data;
     }
 
     @Override

@@ -24,11 +24,51 @@
     -->
     <servlet>
         <servlet-name>SyncServlet</servlet-name>
-        <servlet-class>web.SyncServlet</servlet-class>
+        <servlet-class>web.Sync.SyncServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>Statictics</servlet-name>
+        <servlet-class>web.Statictics.DataServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>Fugure</servlet-name>
+        <servlet-class>web.Statictics.FugureServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>Route</servlet-name>
+        <servlet-class>web.Entety.RouteServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>YearData</servlet-name>
+        <servlet-class>web.Statictics.YearData</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>MonthData</servlet-name>
+        <servlet-class>web.Statictics.MonthData</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>SyncServlet</servlet-name>
         <url-pattern>/sync</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>Statictics</servlet-name>
+        <url-pattern>/statictics/data</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>Fugure</servlet-name>
+        <url-pattern>/statictics/fugure</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>Route</servlet-name>
+        <url-pattern>/entety/route</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>YearData</servlet-name>
+        <url-pattern>/statictics/years</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>MonthData</servlet-name>
+        <url-pattern>/statictics/month</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>

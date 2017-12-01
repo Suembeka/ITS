@@ -34,7 +34,7 @@ public class Converter {
         switch (mess.getType()) {
             case accept_sync: {
                 DataAccept d = (DataAccept) mess.getData();
-                data.put("last_tranaction_id", d.getLastTransactionId());
+                data.put("last_transaction_id", d.getLastTransactionId());
                 break;
             }
             case sync_status: {
@@ -80,7 +80,7 @@ public class Converter {
                     t.setRoute((Route) Factory.getInstance().getEntityDAO().getById(Route.class, tJson.getInt("route_id")));
                     t.setStation((Station) Factory.getInstance().getEntityDAO().getById(Station.class, tJson.getInt("station_id")));
                     t.setTime(new Timestamp(tJson.getLong("time")));
-                    t.setTransport((Transport) Factory.getInstance().getEntityDAO().getById(Route.class, tJson.getInt("transport_id")));                   
+                    t.setTransport((Transport) Factory.getInstance().getEntityDAO().getById(Transport.class, tJson.getInt("transport_id")));                   
                     transactions.add(t);
                 }
                 DataSended data = (DataSended) mes.getData();

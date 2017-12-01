@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>AntCO</title>
+
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="/ITS/assets/materialize/css/materialize.min.css" media="screen,projection"/>
+    <!-- Bootstrap Styles-->
+    <link href="/ITS/assets/css/bootstrap.css" rel="stylesheet"/>
+    <!-- FontAwesome Styles-->
+    <link href="/ITS/assets/css/font-awesome.css" rel="stylesheet"/>
+    <!-- Morris Chart Styles-->
+    <link href="/ITS/assets/js/morris/morris-0.4.3.min.css" rel="stylesheet"/>
+    <!-- Custom Styles-->
+    <link href="/ITS/assets/css/custom-styles.css" rel="stylesheet"/>
+    <!-- Google Fonts-->
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'/>
+    <link rel="stylesheet" href="/ITS/assets/js/Lightweight-Chart/cssCharts.css">
+
+    <script async src="/ITS/assets/js/chartjs.org/http_www.chartjs.org_dist_2.7.0_Chart.bundle.js"></script>
+
+    <style type="text/css">
+        /* Chart.js */
+        @-webkit-keyframes chartjs-render-animation {
+            from {
+                opacity: 0.99
+            }
+            to {
+                opacity: 1
+            }
+        }
+
+        @keyframes chartjs-render-animation {
+            from {
+                opacity: 0.99
+            }
+            to {
+                opacity: 1
+            }
+        }
+
+        .chartjs-render-monitor {
+            -webkit-animation: chartjs-render-animation 0.001s;
+            animation: chartjs-render-animation 0.001s;
+        }
+    </style>
+    <script src="/ITS/assets/js/chartjs.org/http_www.chartjs.org_samples_latest_utils.js"></script>
+    <style>
+        canvas {
+            -moz-user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+        }
+    </style>
+
+
+    <script src="/ITS/assets/js/scripts.js"></script>
+    <script async src="/ITS/assets/js/chartjs.org/http_www.chartjs.org_dist_2.7.0_Chart.bundle.js"></script>
+    <script src="/ITS/assets/js/chartjs.org/http_www.chartjs.org_samples_latest_utils.js"></script>
+</head>
+
+<body onload="indexHtml.getCommonData()">
+<!-- . WRAPPER  -->
+<div id="wrapper">
+    <section class="header_template">
+        <nav class="navbar navbar-default top-navbar" role="navigation">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle waves-effect waves-dark" data-toggle="collapse"
+                        data-target=".sidebar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand waves-effect waves-dark" href="index.html"><i class="large material-icons">insert_chart</i>
+                    <strong>ANTCO</strong></a>
+    
+                <div id="sideNav" href=""><i class="material-icons dp48">toc</i></div>
+            </div>
+    
+        </nav>
+    
+        <!--. NAV TOP  -->
+        <nav class="navbar-default navbar-side" role="navigation">
+            <div class="sidebar-collapse">
+                <ul class="nav" id="main-menu">
+    
+                    <li>
+                        <a class="waves-effect waves-dark" href="index.html"><i class="fa fa-dashboard"></i>Главная</a>
+                    </li>
+                    <li>
+                        <a href="payments.html" class="waves-effect waves-dark"><i class="fa fa-desktop"></i>Тарифы и
+                            платежи</a>
+                    </li>
+                    <li>
+                        <a class="waves-effect waves-dark" href="#"><i class="fa fa-sitemap"></i> Статистика<span
+                                class="fa arrow"></span></a>
+                        <ul class="nav nav-second-level collapse" aria-expanded="false" style="height: 0px;">
+                            <li>
+                                <a href="statistics_routes.html">Маршруты</a>
+                            </li>
+                            <li>
+                                <a href="statistics_drivers.html">Водители</a>
+                            </li>
+                            <li>
+                                <a href="statistics_transport.html">Транспорт</a>
+                            </li>
+    
+                        </ul>
+                    </li>
+                    <li>
+                        <a class="waves-effect waves-dark" href="#"><i class="fa fa-sitemap"></i> База данных<span
+                                class="fa arrow"></span></a>
+                        <ul class="nav nav-second-level collapse" aria-expanded="false" style="height: 0px;">
+                            <li>
+                                <a href="database_vehicles.html">Учет транспортных средств</a>
+                            </li>
+                            <li>
+                                <a href="database_vehicles_types.html">Учет типов транспортных средств</a>
+                            </li>
+                            <li>
+                                <a href="database_drivers.html">Учет водителей</a>
+                            </li>
+                            <li>
+                                <a href="database_routes.html">Учет маршрутов</a>
+                            </li>
+                            <li>
+                                <a href="database_routes_types.html">Учет типов маршрутов</a>
+                            </li>
+                            <li>
+                                <a href="database_stations.html">Учет станций</a>
+                            </li>
+                            <li>
+                                <a href="database_stations_types.html">Учет типов станций</a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    
+    </section>
+
+    <!--. PAGE WRAPPER  -->
+    <div id="page-wrapper">
+        <div class="header">
+            <h1 class="page-header">
+                Главная
+            </h1>
+        </div>
+        <!-- . PAGE INNER  -->
+        <div id="page-inner">
+            <div class="row">
+                <div class="col-lg-12">
+
+                    <ul class="collapsible" data-collapsible="accordion">
+                        <li class="">
+                            <div class="collapsible-header" onclick="indexHtml.getRoutesID()"><i class="material-icons">search</i>Параметры
+                            </div>
+                            <div class="collapsible-body" style="display: none;">
+                                <div class="form-group">
+                                    <label for="route_id">Маршрут</label>
+                                    <select name="route" id="route_id" class="form-control">
+                                        <option selected>...</option>
+                                        <option>...</option>
+                                    </select>
+                                    <div class="form-row">
+                                        <div class="form-group col-md-6">
+                                            <label for="period-begin">C:</label>
+                                            <input class="form-control" type="datetime-local" id="period-begin"
+                                                   value="2017-01-01T00:00">
+                                        </div>
+
+                                        <div class="form-group col-md-6">
+                                            <label for="period-end">По:</label>
+                                            <input class="form-control" type="datetime-local" id="period-end"
+                                                   value="2017-11-01T00:00">
+                                        </div>
+                                    </div>
+                                </div>
+                                <a class="waves-effect waves-light btn" onclick="indexHtml.getData()">OK</a>
+                                <a class="waves-effect waves-light btn" onclick="indexHtml.getCommonData()">Отмена</a>
+                            </div>
+                        </li>
+                    </ul>
+
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-4 col-md-6 col-sm-6 col-xs-12" style="padding-right: 20px;">
+                    <div class="row">
+                        <div class="card horizontal cardIcon waves-effect waves-dark">
+                            <div class="card-image red">
+                                <i class="fa fa-smile-o fa-5x"></i>
+                            </div>
+                            <div class="card-stacked">
+                                <div class="card-content">
+                                    <h3 id="permanent_passengers">0</h3>
+                                </div>
+                                <div class="card-action">
+                                    <strong> Постоянные пассажиры</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row divPersentage" style="display:none;">
+                        <div class="card-panel text-center" id="pie-passengers">
+                            <div class="easypiechart" id="easypiechart-red" data-percent="84">
+                                <span class="percent">0%</span>
+                            </div>
+                            <div class="card-image red"><h4>Всего: </h4></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 col-sm-6 col-xs-12" style="padding-right: 20px;">
+                    <div class="row">
+                        <div class="card horizontal cardIcon waves-effect waves-dark">
+                            <div class="card-image orange">
+                                <i class="fa fa-check fa-5x"></i>
+                            </div>
+                            <div class="card-stacked">
+                                <div class="card-content">
+                                    <h3 id="transactions">0</h3>
+                                </div>
+                                <div class="card-action">
+                                    <strong> Произведенные оплаты</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row divPersentage" style="display:none;">
+                        <div class="card-panel text-center" id="pie-transactions">
+                            <div class="easypiechart" id="easypiechart-orange" data-percent="46">
+                                <span class="percent">0%</span>
+                            </div>
+                            <div class="card-image orange"><h4>Всего: </h4></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 col-sm-6 col-xs-12" style="padding-right: 20px;">
+                    <div class="row">
+                        <div class="card horizontal cardIcon waves-effect waves-dark">
+                            <div class="card-image blue">
+                                <i class="fa fa-money fa-5x"></i>
+                            </div>
+                            <div class="card-stacked">
+                                <div class="card-content">
+                                    <h3 id="earned_money">0</h3>
+                                </div>
+                                <div class="card-action">
+                                    <strong> Заработано</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row divPersentage" style="display:none;">
+                        <div class="card-panel text-center" id="pie-earned_money">
+                            <div class="easypiechart" id="easypiechart-blue" data-percent="84">
+                                <span class="percent">0%</span>
+                            </div>
+                            <div class="card-image blue"><h4>Всего: </h4></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row makeVisible" style="display: none;">
+                <!--<div class="col-md-6 col-sm-12 col-xs-12">-->
+                <div class="card">
+                    <div class="card-action">
+                        График поступления денежных средств
+                    </div>
+                    <div class="card-content">
+                        <div class="chart" id="chart-time-money">
+                            <canvas id="time-money-canvas" width="1000px" height="500px" class="chartjs-render-monitor"
+                                    style="display: block; width: 1000px; height: 500px;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row makeVisible" style="display: none;">
+                <!--<div class="col-md-6 col-sm-12 col-xs-12">-->
+                <div class="card">
+                    <div class="card-action">
+                        График произведенных оплат
+                    </div>
+                    <div class="chart" id="chart-time-passengers">
+                        <canvas id="time-passengers-canvas" width="1000px" height="500px" class="chartjs-render-monitor"
+                                style="display: block; width: 1000px; height: 500px;"></canvas>
+                    </div>
+                </div>
+                <!--</div>-->
+            </div>
+
+        </div>
+        <!-- /. PAGE INNER  -->
+    </div>
+    <!-- /. PAGE WRAPPER  -->
+</div>
+<!-- /. WRAPPER  -->
+<!-- JS Scripts-->
+<!-- jQuery Js -->
+<script src="/ITS/assets/js/jquery/jquery-1.10.2.js"></script>
+
+<!-- Bootstrap Js -->
+<script src="/ITS/assets/js/bootstrap/bootstrap.min.js"></script>
+
+<script src="/ITS/assets/materialize/js/materialize.min.js"></script>
+
+<!-- Metis Menu Js -->
+<script src="/ITS/assets/js/jquery/jquery.metisMenu.js"></script>
+<!-- Morris Chart Js -->
+<script src="/ITS/assets/js/morris/raphael-2.1.0.min.js"></script>
+<script src="/ITS/assets/js/morris/morris.js"></script>
+
+
+<script src="/ITS/assets/js/easyPieChart/easypiechart.js"></script>
+<script src="/ITS/assets/js/easyPieChart/easypiechart-data.js"></script>
+
+<script src="/ITS/assets/js/Lightweight-Chart/jquery.chart.js"></script>
+
+<!-- Custom Js -->
+<script src="/ITS/assets/js/webthemez.com/custom-scripts.js"></script>
+
+<script src="/ITS/assets/js/chartjs.org/charts.js"></script>
+
+
+</body>
+
+</html>
