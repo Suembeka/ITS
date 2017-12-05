@@ -256,3 +256,61 @@ const statRoutesHtml = {
             }).get();
     }
 };
+
+const dataVehiclesHtml = {
+    getAll: "src/php/databaseVehicles.php",
+    _deleteRow: "src/php/databaseVehiclesDelete.php",
+
+    getAllVehicles: function () {
+        $.ajax({
+            type: 'POST',
+            url: dataVehiclesHtml.getAll,
+            dataType: "json",
+            // data: {
+            //     "data": this.changeYear(),
+            // },
+            success: function (data) {
+                console.log(data);
+                dataVehiclesHtml.insertValues(data.data[0]);
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                alert(errorThrown);
+            }
+        });
+    },
+
+    insertValues: function (data) {
+        var str;
+
+        for (let i = 0; i < data.length; i++) {
+            str += '<tr class="gradeA odd" id="'+i+'">\n' +
+                '<td class="sorting_1">' + data[i].licensePlate + '</td>\n' +
+                '<td class=" ">' + data[i].type + '</td>\n' +
+                '<td class=" ">' + data[i].driver + '</td>\n' +
+                '<td class="center ">' + data[i].routeName + '</td>\n' +
+                '<td><a class="waves-effect waves-light btn" onclick="dataVehiclesHtml.deleteRow('+i+')">Удалить</a></td>' +
+                '</tr>';
+        }
+
+        $("#vehiclesTable").html(str);
+    },
+
+    deleteRow: function (rowId) {
+        $.ajax({
+            type: 'POST',
+            url: dataVehiclesHtml._deleteRow,
+            dataType: "html",
+            data: [
+                "id=" + rowId
+            ].join('&'),
+            success: function (data) {
+                console.log("Удалилось");
+                console.log(data);
+                dataVehiclesHtml.insertValues(data.data[0]);
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                alert(errorThrown);
+            }
+        });
+    }
+};
