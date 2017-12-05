@@ -283,15 +283,16 @@ const dataVehiclesHtml = {
         var str;
 
         for (let i = 0; i < data.length; i++) {
-            str += '<tr class="gradeA odd" id="'+i+'">\n' +
+            str += '<tr class="gradeA odd" id="' + i + '">\n' +
                 '<td class="sorting_1">' + data[i].licensePlate + '</td>\n' +
                 '<td class=" ">' + data[i].type + '</td>\n' +
                 '<td class=" ">' + data[i].driver + '</td>\n' +
                 '<td class="center ">' + data[i].routeName + '</td>\n' +
-                '<td><a class="waves-effect waves-light btn" onclick="dataVehiclesHtml.deleteRow('+i+')">Удалить</a></td>' +
+                '<td><a class="waves-effect waves-light btn" onclick="dataVehiclesHtml.deleteRow(' + i + ')">Удалить</a></td>' +
                 '</tr>';
         }
 
+        $("#vehiclesTable").html("");
         $("#vehiclesTable").html(str);
     },
 
@@ -299,10 +300,10 @@ const dataVehiclesHtml = {
         $.ajax({
             type: 'POST',
             url: dataVehiclesHtml._deleteRow,
-            dataType: "html",
-            data: [
-                "id=" + rowId
-            ].join('&'),
+            dataType: "json",
+            data: JSON.stringify({
+                "id": rowId,
+            }),
             success: function (data) {
                 console.log("Удалилось");
                 console.log(data);
